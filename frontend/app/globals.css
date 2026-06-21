@@ -1,0 +1,102 @@
+/* Classic Minimal Design System */
+
+:root {
+  /* Colors */
+  --color-surface: #FFFFFF;
+  --color-canvas: #F7F6F3;
+  --color-ink: #1F2421;
+  --color-ink-muted: #6B7066;
+  --color-border: #E7E5E0;
+  
+  --color-primary: #1E5631;
+  --color-primary-hover: #174526;
+  --color-primary-bg: #EAF2EC; /* Derived tint for active nav, chips */
+  
+  --color-accent: #C98A3E;
+  --color-accent-bg: #FDF6EE;
+  
+  --color-success: #2F8546;
+  --color-success-bg: #E7F3EA;
+  
+  --color-warning: #C77B1F;
+  --color-warning-bg: #FDF3E6;
+  
+  --color-danger: #B3412C;
+  --color-danger-bg: #FAECE9;
+  
+  --color-info: #2C6E8C;
+  --color-info-bg: #EAF3F7;
+
+  /* Typography */
+  --font-display: var(--font-source-serif), serif;
+  --font-body: var(--font-inter), sans-serif;
+
+  /* Shape & Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  /* Elevation & Shadow */
+  --shadow-1: 0 1px 2px rgba(31, 36, 33, 0.04);
+  --shadow-2: 0 4px 12px rgba(31, 36, 33, 0.08);
+  --shadow-3: 0 12px 32px rgba(31, 36, 33, 0.12);
+}
+
+/* Base Reset & Setup */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: 0.5em;
+}
+
+/* Numerals / KPI numbers should be tabular */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Utilities */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: var(--font-body);
+}

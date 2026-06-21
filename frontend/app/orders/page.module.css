@@ -1,0 +1,326 @@
+.container {
+  padding: 2rem;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  color: var(--color-ink-muted);
+  font-size: 0.95rem;
+}
+
+.mainLayout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Order List */
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.listHeader h2 {
+  font-size: 1.25rem;
+}
+
+.select {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  background-color: var(--color-surface);
+}
+
+.cardsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.orderCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orderId {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.cardMid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customerName {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.deliveryDate {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.cardBot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.amount {
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
+.manageBtn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Detail View */
+.detailView {
+  position: sticky;
+  top: 2rem;
+}
+
+.detailCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detailTitle h2 {
+  margin: 0;
+}
+
+.detailTitle p {
+  margin: 0;
+  color: var(--color-ink-muted);
+}
+
+.cancelBtn {
+  font-size: 0.85rem;
+}
+
+/* Stage Tracker */
+.stageTracker {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+  position: relative;
+}
+
+.stageTracker::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-border);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.stageStep {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.stepDot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  border: 2px solid var(--color-surface);
+  transition: all 0.3s ease;
+}
+
+.stepLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-ink-muted);
+  text-align: center;
+  max-width: 60px;
+}
+
+.completed .stepDot {
+  background-color: var(--color-success);
+}
+
+.completed .stepLabel {
+  color: var(--color-success);
+}
+
+.current .stepDot {
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-bg);
+  transform: scale(1.2);
+}
+
+.current .stepLabel {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.actionPanel {
+  margin: 1rem 0;
+}
+
+.nextStageBtn {
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.infoSection h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.measurementsCard, .detailsCard {
+  padding: 1rem;
+}
+
+.measurementsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.measureRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-canvas);
+}
+
+.measureLabel {
+  color: var(--color-ink-muted);
+}
+
+.measureVal {
+  font-weight: 600;
+}
+
+.emptyMeasurements {
+  text-align: center;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.emptyMeasurements p {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+
+.addMeasureBtn {
+  width: fit-content;
+  margin: 0 auto;
+  font-size: 0.8rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-canvas);
+  font-size: 0.9rem;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 1024px) {
+  .mainLayout {
+    grid-template-columns: 1fr;
+  }
+  
+  .detailView {
+    position: static;
+  }
+  
+  .stageTracker {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+  }
+  
+  .stageTracker::before {
+    display: none;
+  }
+  
+  .stageStep {
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .stepLabel {
+    text-align: left;
+    max-width: none;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}

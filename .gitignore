@@ -39,3 +39,11 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# MCP Configuration Files (Contains secrets/tokens)
+mcp.json
+mcp_config.json
+
+# Agents / Customizations
+.agents
+.agen

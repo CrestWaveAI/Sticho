@@ -9,7 +9,9 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+    import warnings
+    warnings.warn("DATABASE_URL environment variable is not set. Falling back to dummy database URL for module import.")
+    DATABASE_URL = "postgresql+asyncpg://postgres:placeholder@localhost:5432/postgres"
 
 if "[YOUR_DATABASE_PASSWORD_HERE]" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("[YOUR_DATABASE_PASSWORD_HERE]", "placeholder")

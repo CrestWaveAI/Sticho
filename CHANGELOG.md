@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented core Phase 1 API endpoints in `backend/app/api/v1/endpoints/`:
+  - Created [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py) containing:
+    - `GET /api/v1/tailors` (Search and discover tailors with optional filters: category, locality, city, pin code; returns `TailorPublicResponse` which gates contact info).
+    - `GET /api/v1/tailors/{tailor_id}` (Retrieve detailed tailor profile; returns `TailorDetailResponse` which gates contact info).
+  - Created [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py) containing:
+    - `POST /api/v1/leads` (Captures a customer lead and unlocks the tailor's contact details, returning `TailorPrivateResponse` which includes the contact number).
+- Integrated endpoints:
+  - Created combined router in [backend/app/api/v1/router.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/router.py).
+  - Registered router under `/api/v1` in [backend/app/main.py](file:///Users/amankumar/Aman/Sticho/backend/app/main.py).
+- Improved local connection resilience:
+  - Modified [backend/app/core/db.py](file:///Users/amankumar/Aman/Sticho/backend/app/core/db.py) to gracefully handle database URL password placeholders and parse `sslmode` query parameters for `asyncpg`.
+- Added test dependencies and integration test suite:
+  - Added `httpx` and `aiosqlite` via `uv add`.
+  - Created [backend/app/test_endpoints.py](file:///Users/amankumar/Aman/Sticho/backend/app/test_endpoints.py) utilizing an in-memory SQLite database, mock seeding, and custom metadata events to bypass PostgreSQL-specific schema constraints.
+  - Created [docs/testing.md](file:///Users/amankumar/Aman/Sticho/docs/testing.md) to serve as a unified testing guide and log containing instructions, environment setup commands, and recent execution outputs.
+- Configured frontend environment:
+  - Created [frontend/.env.local](file:///Users/amankumar/Aman/Sticho/frontend/.env.local) with Supabase credentials.
 - Created a centralized documentation and development tracking system inside `/docs`.
   - Added [docs/README.md](file:///Users/amankumar/Aman/Sticho/docs/README.md) as the central index.
   - Added [docs/backend-tracker.md](file:///Users/amankumar/Aman/Sticho/docs/backend-tracker.md) to log backend endpoints, DB models, and dependencies.

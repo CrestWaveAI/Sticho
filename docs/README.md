@@ -10,6 +10,8 @@ This directory is used to track every change, decision, branch, and feature impl
    * Logs branches created, PRs opened, and conventional commit logs.
 3. **[Architecture Log](file:///Users/amankumar/Aman/Sticho/docs/architecture-log.md)**
    * Architecture Decision Records (ADRs) explaining technical choices (e.g., choice of DB, authentication methods).
+4. **[Testing Guide](file:///Users/amankumar/Aman/Sticho/docs/testing.md)**
+   * Instructions for running backend unit and integration tests and logs of execution results.
 
 ---
 

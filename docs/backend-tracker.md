@@ -21,6 +21,8 @@ List of packages added via `uv add`:
 | `asyncpg` | Asynchronous PostgreSQL database client | 2026-06-23 | DB Connection |
 | `psycopg2-binary` | Synchronous PostgreSQL database adapter | 2026-06-23 | DB Connection |
 | `python-dotenv` | Reads key-value pairs from .env files | 2026-06-23 | DB Connection |
+| `httpx` | Asynchronous HTTP client for API integration tests | 2026-06-23 | Endpoints Testing |
+| `aiosqlite` | Asynchronous SQLite provider for local test environment | 2026-06-23 | Endpoints Testing |
 
 ---
 
@@ -89,6 +91,9 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 |---|---|---|---|---|---|
 | `GET` | `/` | Meta | No | Root greeting with version details | Active |
 | `GET` | `/health` | Meta | No | Server health check endpoint | Active |
+| `GET` | `/api/v1/tailors` | Tailors | No | Search tailors with locality/city/pin_code/category filter (contact_number hidden) | Active |
+| `GET` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Retrieve detailed tailor profile (contact_number hidden) | Active |
+| `POST` | `/api/v1/leads` | Leads | No | Submit a customer lead for a tailor; returns unlocked tailor contact details | Active |
 
 ---
 
@@ -102,6 +107,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-23:** Implemented tailor search/filtering (`GET /api/v1/tailors`), tailor details (`GET /api/v1/tailors/{tailor_id}`), and lead capture (`POST /api/v1/leads`) endpoints. Integrated routing in `app/main.py`. Added test dependencies `httpx` and `aiosqlite` and built a self-contained in-memory SQLite integration test suite `app/test_endpoints.py`. Improved DB connection fallback logic for local environments.
 * **2026-06-23:** Created SQLAlchemy ORM models (`Location`, `Category`, `Tailor`, `Service`, `PortfolioImage`, `Lead`) in `app/models/` and Pydantic validation schemas in `app/schemas/`. Created import validation test script `app/test_models.py`.
 * **2026-06-23:** Applied initial Supabase DDL schema migrations (`create_initial_schema`) and seeded database with 7 tailor profiles, categories, and services matching frontend specifications.
 * **2026-06-23:** Set up async connection engine and DB session manager in `app/core/db.py` using SQLAlchemy and asyncpg. Created a database connection test script `app/test_db_conn.py`.

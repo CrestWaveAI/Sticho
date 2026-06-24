@@ -185,6 +185,139 @@ async def run_tests():
         print(f"  - Gated Contact Number unlocked: {tailor_unlocked['contact_number']}")
         print("Test 5 Passed!")
 
+        # Test 6: PUT /api/v1/tailors/{tailor_id} (Edit profile)
+        print(f"\nTest 6: Update tailor profile details")
+        profile_update = {
+            "name": "Signature Boutique",
+            "bio": "Updated premium boutique bio"
+        }
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}", json=profile_update)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        updated_tailor = response.json()
+        assert updated_tailor["name"] == "Signature Boutique"
+        assert updated_tailor["bio"] == "Updated premium boutique bio"
+        print(f"  - Profile update verified successfully.")
+        print("Test 6 Passed!")
+
+        # Test 7: Services CRUD
+        print("\nTest 7: Run Services CRUD operations")
+        # Create
+        new_service_payload = {
+            "tailor_id": str(test_tailor_id),
+            "category_id": str(cat.id),
+            "price_estimate": "350.00",
+            "time_estimate_days": 4,
+            "description": "Premium Custom Suit Stitching"
+        }
+        response = await client.post("/api/v1/services", json=new_service_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        service_data = response.json()
+        new_service_id = service_data["id"]
+        assert service_data["price_estimate"] == "350.00"
+        print("  - Service created successfully.")
+
+        # Update
+        service_update_payload = {
+            "price_estimate": "400.00",
+            "time_estimate_days": 5,
+            "description": "Updated Suit Stitching description"
+        }
+        response = await client.put(f"/api/v1/services/{new_service_id}", json=service_update_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert response.json()["price_estimate"] == "400.00"
+        print("  - Service updated successfully.")
+
+        # List
+        response = await client.get(f"/api/v1/services/tailor/{test_tailor_id}")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert len(response.json()) >= 1, "Expected at least 1 service listing"
+        print("  - List services for tailor boutique verified.")
+
+        # Delete
+        response = await client.delete(f"/api/v1/services/{new_service_id}")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("  - Service deleted successfully.")
+        print("Test 7 Passed!")
+
+        # Test 8: Portfolio Management (Metadata and Upload validations)
+        print("\nTest 8: Run Portfolio Management operations")
+        # Metadata add
+        metadata_payload = {
+            "image_url": "https://cloudinary.com/test1.jpg",
+            "caption": "Test Design 1",
+            "position": 0
+        }
+        response = await client.post(f"/api/v1/tailors/{test_tailor_id}/portfolio", json=metadata_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        img1 = response.json()
+        img1_id = img1["id"]
+        assert img1["image_url"] == "https://cloudinary.com/test1.jpg"
+        print("  - Portfolio metadata added successfully.")
+
+        # Multipart upload validation: invalid file type
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
+            files={"file": ("test.txt", b"dummy file content", "text/plain")}
+        )
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "Unsupported file type" in response.json()["detail"]
+        print("  - File type validation verified (text/plain rejected).")
+
+        # Multipart upload validation: file size limit (5MB)
+        large_content = b"x" * (6 * 1024 * 1024) # 6MB
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
+            files={"file": ("large.jpg", large_content, "image/jpeg")}
+        )
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "File size exceeds" in response.json()["detail"]
+        print("  - File size validation verified (>5MB rejected).")
+
+        # Valid multipart upload
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
+            files={"file": ("design2.jpg", b"fake jpeg content", "image/jpeg")},
+            data={"caption": "Test Design 2"}
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        img2 = response.json()
+        img2_id = img2["id"]
+        assert img2["image_url"].startswith("/static/media/")
+        assert img2["caption"] == "Test Design 2"
+        print("  - Valid portfolio file upload verified.")
+
+        # Bulk reordering
+        reorder_payload = [
+            {"id": img1_id, "position": 2},
+            {"id": img2_id, "position": 1}
+        ]
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}/portfolio/reorder", json=reorder_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("  - Portfolio bulk reordering verified.")
+
+        # Enforce max limit of 20 images
+        # We currently have 2 images. Let's add 18 more to reach 20.
+        for i in range(18):
+            await client.post(
+                f"/api/v1/tailors/{test_tailor_id}/portfolio",
+                json={"image_url": f"https://cloudinary.com/test_{i}.jpg", "caption": f"Design {i}", "position": i + 3}
+            )
+        # Attempt to add the 21st image
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio",
+            json={"image_url": "https://cloudinary.com/test_21.jpg", "caption": "Should fail", "position": 21}
+        )
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "limit of 20" in response.json()["detail"]
+        print("  - Portfolio image limit of 20 verified.")
+
+        # Cleanup: delete images
+        # Delete first
+        response = await client.delete(f"/api/v1/tailors/{test_tailor_id}/portfolio/{img1_id}")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("  - Portfolio image deletion verified.")
+        print("Test 8 Passed!")
+
     # Cleanup engine connection
     await test_engine.dispose()
     print("\nAll integration tests passed successfully against local SQLite database!")

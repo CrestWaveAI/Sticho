@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented Tailor Profile CRUD and Portfolio Management endpoints in [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py):
+  - `PUT /api/v1/tailors/{tailor_id}` (update tailor boutique details).
+  - `POST /api/v1/tailors/{tailor_id}/portfolio` (add portfolio image metadata: URL and caption).
+  - `POST /api/v1/tailors/{tailor_id}/portfolio/upload` (accept multipart file uploads, perform JPEG/PNG/WEBP and size validations (max 5MB), enforce max 20 images limit, and save files locally under static media).
+  - `PUT /api/v1/tailors/{tailor_id}/portfolio/reorder` (bulk reorder positions).
+  - `DELETE /api/v1/tailors/{tailor_id}/portfolio/{image_id}` (delete portfolio image and file).
+- Implemented Services CRUD endpoints in [services.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/services.py):
+  - `POST /api/v1/services` (create service listing).
+  - `PUT /api/v1/services/{service_id}` (edit price/time estimates, description).
+  - `DELETE /api/v1/services/{service_id}` (remove service listing).
+  - `GET /api/v1/services/tailor/{tailor_id}` (retrieve all services for a boutique).
+- Registered new endpoint dependencies:
+  - Added `aiofiles` and `python-multipart` to manage form-data and static file storage.
+  - Mounted `/static` files server in [main.py](file:///Users/amankumar/Aman/Sticho/backend/app/main.py).
 - Implemented core Phase 1 API endpoints in `backend/app/api/v1/endpoints/`:
   - Created [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py) containing:
     - `GET /api/v1/tailors` (Search and discover tailors with optional filters: category, locality, city, pin code; returns `TailorPublicResponse` which gates contact info).

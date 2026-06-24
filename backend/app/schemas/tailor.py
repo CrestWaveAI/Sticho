@@ -51,3 +51,13 @@ class TailorPrivateResponse(TailorDetailResponse):
 
     class Config:
         from_attributes = True
+
+class TailorUpdate(BaseModel):
+    name: str | None = Field(None, description="Name of the tailor boutique")
+    email: str | None = Field(None, description="Email address")
+    bio: str | None = Field(None, description="Bio or description of specialities")
+    address: str | None = Field(None, description="Street/location address details")
+    gradient: str | None = Field(None, description="CSS gradient background for card display")
+    contact_number: str | None = Field(None, description="Phone number of the tailor")
+    location_id: uuid.UUID | None = Field(None, description="Reference to location id")
+    is_verified: bool | None = Field(None, description="Verification status")

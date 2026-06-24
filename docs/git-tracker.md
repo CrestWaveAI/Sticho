@@ -6,6 +6,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | Branch Name | Base Branch | Purpose | Author | Status |
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
+| `feature/backend-profile-SCRUM-21` | `develop` | Implement Tailor Profile CRUD, Services CRUD, and Portfolio Management APIs | Antigravity | Active (Tests Passing) |
 
 ---
 

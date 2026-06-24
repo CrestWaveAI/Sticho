@@ -6,15 +6,14 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | Branch Name | Base Branch | Purpose | Author | Status |
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
-| `feature/backend-setup` | `develop` | Backend initial scaffolding & setup | Antigravity | PR Opened (#8) |
-| `feature/backend-endpoints` | `feature/backend-setup` | Implement Phase 1 API endpoints & integration tests | Antigravity | Active |
 
 ---
 
 ## 2. Completed / Merged Pull Requests
 | PR # | Source Branch | Target Branch | Approved By | Date Merged | Description / Ticket Key |
 |---|---|---|---|---|---|
-| [#8](https://github.com/CrestWaveAI/Stichoh/pull/8) | `feature/backend-setup` | `develop` | *Pending* | - | Bootstrapped FastAPI, Supabase schema migration & seeding, ORM models, and validation schemas setup |
+| [#8](https://github.com/CrestWaveAI/Stichoh/pull/8) | `feature/backend-setup` | `develop` | User (approved via chat) | 2026-06-24 | Bootstrapped FastAPI, Supabase schema migration & seeding, ORM models, and validation schemas setup |
+| [#9](https://github.com/CrestWaveAI/Stichoh/pull/9) | `feature/backend-endpoints` | `develop` | User (approved via chat) | 2026-06-24 | Implemented tailor search, detail routing, lead registration, and sqlite integration tests (KAN-4) |
 
 ---
 

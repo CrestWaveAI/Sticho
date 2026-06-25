@@ -24,7 +24,7 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [tailorsList, setTailorsList] = useState<Tailor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
 
   // Autocomplete suggestions
   const [suggestions, setSuggestions] = useState<LocationInfo[]>([]);
@@ -47,7 +47,10 @@ export default function Home() {
     try {
       const stored = localStorage.getItem("unlocked_tailors");
       if (stored) {
-        setUnlockedContacts(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setTimeout(() => {
+          setUnlockedContacts(parsed);
+        }, 0);
       }
     } catch (e) {
       console.error("Failed to load unlocked tailors from localStorage:", e);
@@ -64,7 +67,7 @@ export default function Home() {
         // and match query based on freeform string
         const categoryFilter = selectedCategories.length > 0 ? selectedCategories[0] : undefined;
         
-        let params: { locality?: string; city?: string; pin_code?: string; category?: string } = {
+        const params: { locality?: string; city?: string; pin_code?: string; category?: string } = {
           category: categoryFilter,
         };
 

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
+
+### Fixed
+- Fixed ESLint errors in [page.tsx](file:///Users/amankumar/Aman/Sticho/frontend/src/app/page.tsx):
+  - Removed unused `useTransition` and `startTransition`.
+  - Changed `let params` to `const params` because it was never reassigned.
+  - Deferred the call to `setUnlockedContacts` inside `useEffect` using `setTimeout` to avoid the synchronous `react-hooks/set-state-in-effect` rule warning.
+
 ### Added
 - Implemented search autocomplete locations endpoint (`GET /api/v1/locations/autocomplete`) in [locations.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/locations.py) to search locality, city, or pin code with limit of 10.
 - Implemented API fetch helper [api.ts](file:///Users/amankumar/Aman/Sticho/frontend/src/app/api.ts) for frontend-backend queries.

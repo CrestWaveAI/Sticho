@@ -58,12 +58,12 @@ Detailed models, columns, and validation schemas implemented:
 
 ### 3. Tailors (`Tailor` model)
 * **Table:** `public.tailors`
-* **Fields:** `id` (UUID, PK), `name` (String), `contact_number` (String), `email` (String), `bio` (Text), `address` (String), `location_id` (UUID, FK), `is_verified` (Boolean), `gradient` (String), `rating` (Numeric), `reviews_count` (Integer), `created_at` (DateTime)
+* **Fields:** `id` (UUID, PK), `name` (String), `contact_number` (String), `email` (String), `bio` (Text), `address` (String), `location_id` (UUID, FK), `is_verified` (Boolean), `gradient` (String), `rating` (Numeric), `reviews_count` (Integer), `experience` (Integer), `latitude` (Numeric), `longitude` (Numeric), `working_hours` (JSONB), `created_at` (DateTime)
 * **Schemas:** 
   * `TailorCreate` (includes all fields)
   * `TailorUpdate` (all fields optional for profile updates)
   * `TailorPublicResponse` (excludes `contact_number`; computes `categories` list from services dynamically)
-  * `TailorDetailResponse` (extends public response)
+  * `TailorDetailResponse` (extends public response; includes experience, latitude, longitude, working_hours, and portfolio_images)
   * `TailorPrivateResponse` (includes `contact_number` unlocked)
 
 ### 4. Services (`Service` model)
@@ -88,6 +88,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | Migration ID / Timestamp | Description | Type (Up/Down) | DB Lock Risk (High/Med/Low) | Status |
 |---|---|---|---|---|
 | `create_initial_schema` | Supabase SQL DDL migration setting up the core 6 tables and indexes | Up | Low | Applied |
+| `add_tailor_profile_fields` | Adds experience, latitude, longitude, and working_hours to tailors, and position to portfolio_images | Up | Low | Applied |
 
 ---
 
@@ -98,7 +99,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `GET` | `/health` | Meta | No | Server health check endpoint | Active |
 | `GET` | `/api/v1/locations/autocomplete` | Locations | No | Retrieve location autocomplete suggestions matching query term | Active |
 | `GET` | `/api/v1/tailors` | Tailors | No | Search tailors with locality/city/pin_code/category filter (contact_number hidden) | Active |
-| `GET` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Retrieve detailed tailor profile (contact_number hidden) | Active |
+| `GET` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Retrieve detailed tailor profile (gates unverified tailors with 404, contact_number hidden) | Active |
 | `PUT` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Edit tailor boutique profile details | Active |
 | `POST` | `/api/v1/tailors/{tailor_id}/portfolio` | Portfolio | No | Add portfolio image metadata (URL, caption) | Active |
 | `POST` | `/api/v1/tailors/{tailor_id}/portfolio/upload` | Portfolio | No | Upload portfolio image file (max 5MB, JPEG/PNG/WEBP, limit 20) | Active |
@@ -122,6 +123,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-25:** Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`. Expanded `tailors` database schema on Supabase with `experience`, `latitude`, `longitude`, `working_hours`, and `portfolio_images.position`. Enforced verification gate on `GET /api/v1/tailors/{tailor_id}`. Updated integration test suite `test_endpoints.py` to verify all updates.
 * **2026-06-25:** Implemented search autocomplete locations endpoint (`GET /api/v1/locations/autocomplete`) matching locality name, city, or pin code with limit of 10. Added Test 9 to `test_endpoints.py` to verify locations autocomplete querying.
 * **2026-06-24:** Implemented tailor profile CRUD (`PUT /api/v1/tailors/{tailor_id}`), Services CRUD (`POST/PUT/DELETE /api/v1/services` and `GET /services/tailor/{tailor_id}`), and Portfolio Management APIs (`POST/PUT/DELETE` portfolio images, reordering endpoints, and file upload size/type validation with local storage fallback). Added dependencies `aiofiles` and `python-multipart`. Mounted `StaticFiles` middleware in `app/main.py`. Updated `test_endpoints.py` to cover all new CRUD APIs.
 * **2026-06-23:** Implemented tailor search/filtering (`GET /api/v1/tailors`), tailor details (`GET /api/v1/tailors/{tailor_id}`), and lead capture (`POST /api/v1/leads`) endpoints. Integrated routing in `app/main.py`. Added test dependencies `httpx` and `aiosqlite` and built a self-contained in-memory SQLite integration test suite `app/test_endpoints.py`. Improved DB connection fallback logic for local environments.

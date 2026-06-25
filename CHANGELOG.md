@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`:
+  - Added `experience`, `latitude`, `longitude`, and `working_hours` columns to `public.tailors` table.
+  - Added `position` column to `public.portfolio_images` table.
+  - Updated SQLAlchemy ORM models (`Tailor` and `PortfolioImage`) and Pydantic schemas (`TailorDetailResponse` and `TailorUpdate`) to support these fields.
+  - Enforced a verification gate in `get_tailor_detail` (`GET /api/v1/tailors/{tailor_id}`) returning `404 Not Found` if a tailor is unverified (`is_verified = False`).
+  - Updated portfolio images to fetch and order by `position`.
+- Updated backend integration test suite in `test_endpoints.py` to seed the new fields, mock nested queries for portfolio images, deserialize JSON objects, and verify response formats and verification gates.
 - Fully implemented the portfolio management endpoints using the Supabase REST client in [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py):
   - `POST /api/v1/tailors/{tailor_id}/portfolio` (add portfolio metadata).
   - `POST /api/v1/tailors/{tailor_id}/portfolio/upload` (validate file types and sizes, save files locally, insert database record).

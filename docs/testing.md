@@ -88,8 +88,12 @@ Test 3: Search tailors with category=Alterations
   - Match: Signature Threads with categories ['Alterations']
 Test 3 Passed!
 
-Test 4: Get tailor detail view for 6ed6ab9b-68a6-4988-bd3e-a9789e942ea7
-  - Detail view for Signature Threads verified (contact gated).
+Test 4: Get tailor detail view for 6f9d62c0-f569-417f-a649-80033674c74f
+  - Detail view for Signature Threads verified (contact gated, new fields present).
+Test 4b: Get tailor detail view for unverified tailor a21c2416-8a4d-40e8-b26e-b531ad96c861
+  - Unverified tailor is blocked (404 Not Found).
+Test 4c: Get tailor detail view for non-existent tailor fda8e055-a573-4926-8a1e-b6c7d961403a
+  - Non-existent tailor returns 404.
 Test 4 Passed!
 
 Test 5: Submit lead to unlock contact info
@@ -175,3 +179,11 @@ Route (app)
 ○  (Static)  prerendered as static content
 ```
 *(Build successfully completed with zero TypeScript errors or bundle generation failures)*
+
+---
+
+## 6. Browser UI Testing (Omitted due to missing Frontend)
+
+For the tailor details profile page (`SCRUM-15`), the Next.js frontend currently does not contain any subpages or route mappings (such as `/tailors/[id]`) for displaying individual tailor profiles.
+- As a result, browser-based UI testing using the `/browser` subagent was **omitted** for this feature.
+- All backend-related API behaviors (the GET endpoints, update routes, leads unlock endpoints, and the unverified tailor verification gates) have been fully covered and validated using backend integration test suites (`test_endpoints.py`).

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, Boolean, Numeric, Integer, ForeignKey, DateTime
+from sqlalchemy import String, Text, Boolean, Numeric, Integer, ForeignKey, DateTime, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
@@ -24,6 +24,10 @@ class Tailor(Base):
     gradient: Mapped[str | None] = mapped_column(String, nullable=True)
     rating: Mapped[float] = mapped_column(Numeric(2, 1), default=0.0, nullable=False)
     reviews_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    experience: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
+    working_hours: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )

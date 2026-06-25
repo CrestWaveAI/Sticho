@@ -2,6 +2,7 @@ import asyncio
 import httpx
 import uuid
 import sqlite3
+import json
 from unittest.mock import patch
 from datetime import datetime
 from sqlalchemy import select, event
@@ -31,6 +32,8 @@ def normalize_val(val):
         return val.hex
     elif isinstance(val, datetime):
         return val.isoformat()
+    elif isinstance(val, dict):
+        return json.dumps(val)
     elif isinstance(val, str):
         try:
             return uuid.UUID(val).hex
@@ -149,6 +152,11 @@ class MockQueryBuilder:
             
             for t in tailors:
                 t["is_verified"] = bool(t["is_verified"])
+                if isinstance(t.get("working_hours"), str):
+                    try:
+                        t["working_hours"] = json.loads(t["working_hours"])
+                    except Exception:
+                        pass
                 if t.get("location_id"):
                     cursor.execute("SELECT * FROM locations WHERE id = ?", (t["location_id"],))
                     loc_cols = [col[0] for col in cursor.description]
@@ -166,6 +174,12 @@ class MockQueryBuilder:
                     cat_row = cursor.fetchone()
                     s["categories"] = dict(zip(cat_cols, cat_row)) if cat_row else None
                 t["services"] = services
+
+                cursor.execute("SELECT * FROM portfolio_images WHERE tailor_id = ?", (t["id"],))
+                port_cols = [col[0] for col in cursor.description]
+                port_images = [dict(zip(port_cols, r)) for r in cursor.fetchall()]
+                port_images.sort(key=lambda x: x.get("position", 0))
+                t["portfolio_images"] = port_images
             return MockExecuteResult(tailors)
 
         elif self.table_name == "locations":
@@ -276,10 +290,32 @@ async def run_tests():
             gradient="linear-gradient(135deg, #bf91ac 0%, #7d4d68 100%)",
             rating=4.8,
             reviews_count=120,
+            experience=8,
+            latitude=12.9784,
+            longitude=77.6408,
+            working_hours={"Mon-Sat": "10:00 AM - 8:00 PM", "Sun": "Closed"},
             created_at=datetime.utcnow()
         )
         session.add(tailor)
         
+        # 3b. Add Unverified Tailor
+        unverified_tailor = Tailor(
+            id=uuid.uuid4(),
+            name="Unverified Tailor",
+            contact_number="+91 98765 43211",
+            email="unverified@tailor.com",
+            bio="Unverified bio",
+            address="Unverified Address",
+            location_id=loc.id,
+            is_verified=False,
+            experience=2,
+            latitude=12.9785,
+            longitude=77.6409,
+            working_hours={"Mon-Sat": "11:00 AM - 7:00 PM"},
+            created_at=datetime.utcnow()
+        )
+        session.add(unverified_tailor)
+
         await session.flush()
         
         # 4. Add Service
@@ -297,6 +333,7 @@ async def run_tests():
         await session.commit()
         
         test_tailor_id = tailor.id
+        test_unverified_tailor_id = unverified_tailor.id
         test_cat_name = cat.name
         test_loc_name = loc.name
         
@@ -357,10 +394,28 @@ async def run_tests():
         print(f"\nTest 4: Get tailor detail view for {test_tailor_id}")
         response = await client.get(f"/api/v1/tailors/{test_tailor_id}")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        tailor = response.json()
-        assert tailor["id"] == str(test_tailor_id), f"Expected ID {test_tailor_id}"
-        assert "contact_number" not in tailor, "Security Warning: contact_number exposed in tailor detail view!"
-        print(f"  - Detail view for {tailor['name']} verified (contact gated).")
+        tailor_res = response.json()
+        assert tailor_res["id"] == str(test_tailor_id), f"Expected ID {test_tailor_id}"
+        assert "contact_number" not in tailor_res, "Security Warning: contact_number exposed in tailor detail view!"
+        assert tailor_res["experience"] == 8, f"Expected experience 8, got {tailor_res.get('experience')}"
+        assert tailor_res["latitude"] == 12.9784, f"Expected latitude 12.9784, got {tailor_res.get('latitude')}"
+        assert tailor_res["longitude"] == 77.6408, f"Expected longitude 77.6408, got {tailor_res.get('longitude')}"
+        assert tailor_res["working_hours"] == {"Mon-Sat": "10:00 AM - 8:00 PM", "Sun": "Closed"}, f"Expected working_hours, got {tailor_res.get('working_hours')}"
+        assert isinstance(tailor_res["portfolio_images"], list), "Expected portfolio_images to be a list"
+        print(f"  - Detail view for {tailor_res['name']} verified (contact gated, new fields present).")
+
+        # Test 4b: Get tailor detail view for unverified tailor (should fail with 404)
+        print(f"Test 4b: Get tailor detail view for unverified tailor {test_unverified_tailor_id}")
+        response = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}")
+        assert response.status_code == 404, f"Expected 404 for unverified tailor, got {response.status_code}"
+        print("  - Unverified tailor is blocked (404 Not Found).")
+
+        # Test 4c: Get tailor detail view for non-existent tailor (should fail with 404)
+        fake_id = uuid.uuid4()
+        print(f"Test 4c: Get tailor detail view for non-existent tailor {fake_id}")
+        response = await client.get(f"/api/v1/tailors/{fake_id}")
+        assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+        print("  - Non-existent tailor returns 404.")
         print("Test 4 Passed!")
 
         # Test 5: POST /api/v1/leads (Create lead -> Unlock contact info)

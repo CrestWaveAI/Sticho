@@ -173,10 +173,12 @@ class MockQueryBuilder:
             params = []
             for filt in self.filters:
                 if filt[0] == "or":
-                    parts = filt[1].split(",")
-                    query_val = parts[0].split(".ilike.")[1].replace("%", "")
-                    sql += " WHERE name LIKE ? OR city LIKE ? OR pin_code LIKE ?"
-                    params.extend([f"%{query_val}%", f"%{query_val}%", f"%{query_val}%"])
+                    import re
+                    match = re.search(r'name\.ilike\.(?:"%)?([^"%]+)(?:%")?', filt[1])
+                    if match:
+                        query_val = match.group(1)
+                        sql += " WHERE name LIKE ? OR city LIKE ? OR pin_code LIKE ?"
+                        params.extend([f"%{query_val}%", f"%{query_val}%", f"%{query_val}%"])
             if self.limit_val:
                 sql += f" LIMIT {self.limit_val}"
             cursor.execute(sql, params)

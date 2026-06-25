@@ -17,11 +17,11 @@ async def autocomplete_locations(
     """
     sb = get_supabase()
 
-    # PostgREST: use `or` filter with ilike
+    # PostgREST: use `or` filter with ilike (wrapped in double quotes to handle commas)
     data = (
         sb.table("locations")
         .select("*")
-        .or_(f"name.ilike.%{q}%,city.ilike.%{q}%,pin_code.ilike.%{q}%")
+        .or_(f'name.ilike."%{q}%",city.ilike."%{q}%",pin_code.ilike."%{q}%"')
         .limit(10)
         .execute()
         .data

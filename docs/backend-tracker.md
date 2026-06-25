@@ -94,6 +94,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 |---|---|---|---|---|---|
 | `GET` | `/` | Meta | No | Root greeting with version details | Active |
 | `GET` | `/health` | Meta | No | Server health check endpoint | Active |
+| `GET` | `/api/v1/locations/autocomplete` | Locations | No | Retrieve location autocomplete suggestions matching query term | Active |
 | `GET` | `/api/v1/tailors` | Tailors | No | Search tailors with locality/city/pin_code/category filter (contact_number hidden) | Active |
 | `GET` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Retrieve detailed tailor profile (contact_number hidden) | Active |
 | `PUT` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Edit tailor boutique profile details | Active |
@@ -119,6 +120,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-25:** Implemented search autocomplete locations endpoint (`GET /api/v1/locations/autocomplete`) matching locality name, city, or pin code with limit of 10. Added Test 9 to `test_endpoints.py` to verify locations autocomplete querying.
 * **2026-06-24:** Implemented tailor profile CRUD (`PUT /api/v1/tailors/{tailor_id}`), Services CRUD (`POST/PUT/DELETE /api/v1/services` and `GET /services/tailor/{tailor_id}`), and Portfolio Management APIs (`POST/PUT/DELETE` portfolio images, reordering endpoints, and file upload size/type validation with local storage fallback). Added dependencies `aiofiles` and `python-multipart`. Mounted `StaticFiles` middleware in `app/main.py`. Updated `test_endpoints.py` to cover all new CRUD APIs.
 * **2026-06-23:** Implemented tailor search/filtering (`GET /api/v1/tailors`), tailor details (`GET /api/v1/tailors/{tailor_id}`), and lead capture (`POST /api/v1/leads`) endpoints. Integrated routing in `app/main.py`. Added test dependencies `httpx` and `aiosqlite` and built a self-contained in-memory SQLite integration test suite `app/test_endpoints.py`. Improved DB connection fallback logic for local environments.
 * **2026-06-23:** Created SQLAlchemy ORM models (`Location`, `Category`, `Tailor`, `Service`, `PortfolioImage`, `Lead`) in `app/models/` and Pydantic validation schemas in `app/schemas/`. Created import validation test script `app/test_models.py`.

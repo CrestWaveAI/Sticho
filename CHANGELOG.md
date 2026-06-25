@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented search autocomplete locations endpoint (`GET /api/v1/locations/autocomplete`) in [locations.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/locations.py) to search locality, city, or pin code with limit of 10.
+- Implemented API fetch helper [api.ts](file:///Users/amankumar/Aman/Sticho/frontend/src/app/api.ts) for frontend-backend queries.
+- Connected customer search and filtering homepage [page.tsx](file:///Users/amankumar/Aman/Sticho/frontend/src/app/page.tsx) to query live tailor and location API endpoints instead of static mock data.
+- Built a Lead Capture Form Modal on the frontend that triggers upon clicking "Contact Tailor", posts customer requirements to `/api/v1/leads`, and reveals the gated tailor phone details upon success.
+- Added Vanilla CSS styles for autocomplete dropdown list, glassmorphic lead capture modal, and unlocked contact panels in [globals.css](file:///Users/amankumar/Aman/Sticho/frontend/src/app/globals.css).
 - Implemented Tailor Profile CRUD and Portfolio Management endpoints in [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py):
   - `PUT /api/v1/tailors/{tailor_id}` (update tailor boutique details).
   - `POST /api/v1/tailors/{tailor_id}/portfolio` (add portfolio image metadata: URL and caption).

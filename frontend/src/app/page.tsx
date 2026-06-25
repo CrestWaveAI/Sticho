@@ -76,12 +76,6 @@ export default function Home() {
           // If it looks like a 6 digit pin code
           if (/^\d{6}$/.test(trimmedQuery)) {
             params.pin_code = trimmedQuery;
-          } else if (trimmedQuery.includes(",")) {
-            const parts = trimmedQuery.split(",");
-            params.locality = parts[0].trim();
-            if (parts[1]) {
-              params.city = parts[1].trim();
-            }
           } else {
             // Otherwise match locality name
             params.locality = trimmedQuery;

@@ -318,6 +318,16 @@ async def run_tests():
         print("  - Portfolio image deletion verified.")
         print("Test 8 Passed!")
 
+        # Test 9: GET /api/v1/locations/autocomplete?q=...
+        print("\nTest 9: Run Locations Autocomplete search")
+        response = await client.get("/api/v1/locations/autocomplete?q=Indi")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        locations_data = response.json()
+        assert len(locations_data) == 1, f"Expected 1 location, got {len(locations_data)}"
+        assert locations_data[0]["name"] == "Indiranagar", f"Expected Indiranagar, got {locations_data[0]['name']}"
+        print("  - Locations autocomplete query matched expected locality.")
+        print("Test 9 Passed!")
+
     # Cleanup engine connection
     await test_engine.dispose()
     print("\nAll integration tests passed successfully against local SQLite database!")

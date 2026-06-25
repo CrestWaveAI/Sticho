@@ -79,10 +79,16 @@ async def search_tailors(
     results = []
     for row in data:
         loc = row.get("locations") or {}
-        if locality and locality.lower() not in (loc.get("name") or "").lower():
-            continue
-        if city and city.lower() not in (loc.get("city") or "").lower():
-            continue
+        if locality:
+            loc_name = (loc.get("name") or "").lower()
+            query_loc = locality.lower()
+            if query_loc not in loc_name and loc_name not in query_loc:
+                continue
+        if city:
+            loc_city = (loc.get("city") or "").lower()
+            query_city = city.lower()
+            if query_city not in loc_city and loc_city not in query_city:
+                continue
         if pin_code and pin_code != (loc.get("pin_code") or ""):
             continue
         if category:

@@ -11,9 +11,9 @@ from supabase import create_client, Client
 
 load_dotenv()
 
-SUPABASE_URL: str = os.environ["SUPABASE_URL"]
+SUPABASE_URL: str = os.environ.get("SUPABASE_URL") or "https://placeholder-url.supabase.co"
 # Use the secret (service-role) key so we can bypass RLS for server-side ops
-SUPABASE_KEY: str = os.environ.get("SUPABASE_SECRET_KEY") or os.environ["SUPABASE_KEY"]
+SUPABASE_KEY: str = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_KEY") or "placeholder-key"
 
 
 @lru_cache(maxsize=1)

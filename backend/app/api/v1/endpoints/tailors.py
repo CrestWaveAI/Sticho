@@ -59,6 +59,35 @@ def _row_to_public(row: dict) -> dict:
     }
 
 
+def _row_to_detail(row: dict) -> dict:
+    """Map a flat Supabase REST row (with nested location, services, and portfolio) to TailorDetailResponse shape."""
+    public_dict = _row_to_public(row)
+    
+    # Portfolio Images
+    portfolio_images = row.get("portfolio_images") or []
+    # Sort by position
+    sorted_images = sorted(portfolio_images, key=lambda x: x.get("position", 0))
+    
+    return {
+        **public_dict,
+        "experience": row.get("experience"),
+        "latitude": float(row["latitude"]) if row.get("latitude") is not None else None,
+        "longitude": float(row["longitude"]) if row.get("longitude") is not None else None,
+        "working_hours": row.get("working_hours"),
+        "portfolio_images": [
+            {
+                "id": img["id"],
+                "tailor_id": img["tailor_id"],
+                "image_url": img["image_url"],
+                "caption": img.get("caption"),
+                "position": img.get("position", 0),
+                "created_at": img.get("created_at") or datetime.utcnow().isoformat()
+            }
+            for img in sorted_images
+        ]
+    }
+
+
 @router.get("", response_model=list[TailorPublicResponse])
 async def search_tailors(
     locality: str | None = Query(None),
@@ -109,14 +138,15 @@ async def get_tailor_detail(tailor_id: uuid.UUID):
     sb = get_supabase()
     data = (
         sb.table("tailors")
-        .select("*, locations(*), services(*, categories(name))")
+        .select("*, locations(*), services(*, categories(name)), portfolio_images(*)")
         .eq("id", str(tailor_id))
+        .eq("is_verified", True)
         .execute()
         .data
     )
     if not data:
         raise HTTPException(status_code=404, detail="Tailor not found")
-    return _row_to_public(data[0])
+    return _row_to_detail(data[0])
 
 
 @router.put("/{tailor_id}", response_model=TailorPrivateResponse)
@@ -130,14 +160,15 @@ async def update_tailor_profile(tailor_id: uuid.UUID, tailor_update: TailorUpdat
         sb.table("tailors")
         .update(update_data)
         .eq("id", str(tailor_id))
-        .select("*, locations(*), services(*, categories(name))")
+        .select("*, locations(*), services(*, categories(name)), portfolio_images(*)")
         .execute()
         .data
     )
     if not result:
         raise HTTPException(status_code=404, detail="Tailor not found")
     row = result[0]
-    return {**_row_to_public(row), "contact_number": row.get("contact_number", "")}
+    detail_dict = _row_to_detail(row)
+    return {**detail_dict, "contact_number": row.get("contact_number", "")}
 
 
 @router.post("/{tailor_id}/portfolio")

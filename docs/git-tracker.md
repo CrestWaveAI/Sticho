@@ -6,6 +6,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | Branch Name | Base Branch | Purpose | Author | Status |
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
+| `feature/backend-profile-details-SCRUM-15` | `develop` | Implement detailed tailor profile fields and view page endpoints | Antigravity | Active (Lint, Build, & Tests Pass) |
 | `feature/frontend-integration-SCRUM-11` | `develop` | Integrate customer search/filtering page, search autocomplete, and lead capture modal | Antigravity | Active (Lint, Build, & Tests Pass) |
 
 ---

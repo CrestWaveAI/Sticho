@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, computed_field
 from app.schemas.location import LocationResponse
 from app.schemas.service import ServiceDetailResponse
+from app.schemas.portfolio import PortfolioImageResponse
 
 class TailorBase(BaseModel):
     name: str = Field(..., description="Name of the tailor boutique")
@@ -43,7 +44,11 @@ class TailorPublicResponse(TailorBase):
 
 # Detailed profile response (gates contact info)
 class TailorDetailResponse(TailorPublicResponse):
-    pass
+    experience: int | None = Field(None, description="Years of experience")
+    latitude: float | None = Field(None, description="Latitude coordinate")
+    longitude: float | None = Field(None, description="Longitude coordinate")
+    working_hours: dict | None = Field(None, description="Working hours dictionary by day")
+    portfolio_images: list[PortfolioImageResponse] = Field([], description="List of portfolio images")
 
 # Private profile response (includes gated contact info - returned ONLY after lead submission)
 class TailorPrivateResponse(TailorDetailResponse):
@@ -61,3 +66,7 @@ class TailorUpdate(BaseModel):
     contact_number: str | None = Field(None, description="Phone number of the tailor")
     location_id: uuid.UUID | None = Field(None, description="Reference to location id")
     is_verified: bool | None = Field(None, description="Verification status")
+    experience: int | None = Field(None, description="Years of experience")
+    latitude: float | None = Field(None, description="Latitude coordinate")
+    longitude: float | None = Field(None, description="Longitude coordinate")
+    working_hours: dict | None = Field(None, description="Working hours dictionary by day")

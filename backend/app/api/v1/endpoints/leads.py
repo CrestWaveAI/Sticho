@@ -19,7 +19,7 @@ async def create_lead(lead_in: LeadCreate):
     # 1. Verify tailor exists and fetch full profile
     tailor_data = (
         sb.table("tailors")
-        .select("*, locations(*), services(*, categories(name))")
+        .select("*, locations(*), services(*, categories(name)), portfolio_images(*)")
         .eq("id", str(lead_in.tailor_id))
         .execute()
         .data
@@ -43,6 +43,6 @@ async def create_lead(lead_in: LeadCreate):
     }).execute()
 
     # 3. Return private tailor profile (includes contact_number)
-    from app.api.v1.endpoints.tailors import _row_to_public
-    public_dict = _row_to_public(tailor_row)
-    return {**public_dict, "contact_number": tailor_row.get("contact_number", "")}
+    from app.api.v1.endpoints.tailors import _row_to_detail
+    detail_dict = _row_to_detail(tailor_row)
+    return {**detail_dict, "contact_number": tailor_row.get("contact_number", "")}

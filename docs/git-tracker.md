@@ -33,7 +33,7 @@ Before merging a branch into `develop`:
 ## 4. Log of Key Commits
 | Commit Hash | Author | Message | Description |
 |---|---|---|---|
-| (Pending) | Antigravity | `fix(frontend): resolve page.tsx ESLint errors & update pre-commit validation rules (SCRUM-11)` | Fixed startTransition/isPending, params declaration, setUnlockedContacts cascading render warning; updated agent/project rules. |
+| `230c857` | Antigravity | `fix(frontend): resolve page.tsx ESLint errors & update pre-commit validation rules (SCRUM-11)` | Fixed startTransition/isPending, params declaration, setUnlockedContacts cascading render warning; updated agent/project rules. |
 | `3a40c77` | Antigravity | `feat(backend): implement tailor search discovery and lead capture endpoints (KAN-4)` | Implemented tailors search, details routing, lead registration, and sqlite integration tests |
 | `a84bb3f` | Antigravity | `feat(backend): bootstrap FastAPI setup, Supabase DB connection, and ORM models` | Initial boilerplate backend commit including models and validation schemas |
 

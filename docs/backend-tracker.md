@@ -23,6 +23,8 @@ List of packages added via `uv add`:
 | `python-dotenv` | Reads key-value pairs from .env files | 2026-06-23 | DB Connection |
 | `httpx` | Asynchronous HTTP client for API integration tests | 2026-06-23 | Endpoints Testing |
 | `aiosqlite` | Asynchronous SQLite provider for local test environment | 2026-06-23 | Endpoints Testing |
+| `aiofiles` | Asynchronous file operations (needed for StaticFiles) | 2026-06-24 | Profile/Portfolio CRUD |
+| `python-multipart` | Parser for multipart form-data (needed for File uploads) | 2026-06-24 | Profile/Portfolio CRUD |
 
 ---
 
@@ -57,6 +59,7 @@ Detailed models, columns, and validation schemas implemented:
 * **Fields:** `id` (UUID, PK), `name` (String), `contact_number` (String), `email` (String), `bio` (Text), `address` (String), `location_id` (UUID, FK), `is_verified` (Boolean), `gradient` (String), `rating` (Numeric), `reviews_count` (Integer), `created_at` (DateTime)
 * **Schemas:** 
   * `TailorCreate` (includes all fields)
+  * `TailorUpdate` (all fields optional for profile updates)
   * `TailorPublicResponse` (excludes `contact_number`; computes `categories` list from services dynamically)
   * `TailorDetailResponse` (extends public response)
   * `TailorPrivateResponse` (includes `contact_number` unlocked)
@@ -68,8 +71,8 @@ Detailed models, columns, and validation schemas implemented:
 
 ### 5. Portfolio Images (`PortfolioImage` model)
 * **Table:** `public.portfolio_images`
-* **Fields:** `id` (UUID, PK), `tailor_id` (UUID, FK), `image_url` (String), `caption` (Text), `created_at` (DateTime)
-* **Schemas:** `PortfolioImageCreate`, `PortfolioImageResponse`
+* **Fields:** `id` (UUID, PK), `tailor_id` (UUID, FK), `image_url` (String), `caption` (Text), `position` (Integer, default 0), `created_at` (DateTime)
+* **Schemas:** `PortfolioImageCreate`, `PortfolioImageResponse`, `PortfolioImagePositionUpdate` (bulk reordering)
 
 ### 6. Leads (`Lead` model)
 * **Table:** `public.leads`
@@ -93,6 +96,15 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `GET` | `/health` | Meta | No | Server health check endpoint | Active |
 | `GET` | `/api/v1/tailors` | Tailors | No | Search tailors with locality/city/pin_code/category filter (contact_number hidden) | Active |
 | `GET` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Retrieve detailed tailor profile (contact_number hidden) | Active |
+| `PUT` | `/api/v1/tailors/{tailor_id}` | Tailors | No | Edit tailor boutique profile details | Active |
+| `POST` | `/api/v1/tailors/{tailor_id}/portfolio` | Portfolio | No | Add portfolio image metadata (URL, caption) | Active |
+| `POST` | `/api/v1/tailors/{tailor_id}/portfolio/upload` | Portfolio | No | Upload portfolio image file (max 5MB, JPEG/PNG/WEBP, limit 20) | Active |
+| `PUT` | `/api/v1/tailors/{tailor_id}/portfolio/reorder` | Portfolio | No | Reorder portfolio image positions bulk | Active |
+| `DELETE` | `/api/v1/tailors/{tailor_id}/portfolio/{image_id}` | Portfolio | No | Delete a portfolio image listing and file | Active |
+| `POST` | `/api/v1/services` | Services | No | Create a new service listing for a tailor boutique | Active |
+| `PUT` | `/api/v1/services/{service_id}` | Services | No | Edit service estimates/description | Active |
+| `DELETE` | `/api/v1/services/{service_id}` | Services | No | Delete a service listing | Active |
+| `GET` | `/api/v1/services/tailor/{tailor_id}` | Services | No | Retrieve all services for a specific tailor boutique | Active |
 | `POST` | `/api/v1/leads` | Leads | No | Submit a customer lead for a tailor; returns unlocked tailor contact details | Active |
 
 ---
@@ -107,6 +119,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-24:** Implemented tailor profile CRUD (`PUT /api/v1/tailors/{tailor_id}`), Services CRUD (`POST/PUT/DELETE /api/v1/services` and `GET /services/tailor/{tailor_id}`), and Portfolio Management APIs (`POST/PUT/DELETE` portfolio images, reordering endpoints, and file upload size/type validation with local storage fallback). Added dependencies `aiofiles` and `python-multipart`. Mounted `StaticFiles` middleware in `app/main.py`. Updated `test_endpoints.py` to cover all new CRUD APIs.
 * **2026-06-23:** Implemented tailor search/filtering (`GET /api/v1/tailors`), tailor details (`GET /api/v1/tailors/{tailor_id}`), and lead capture (`POST /api/v1/leads`) endpoints. Integrated routing in `app/main.py`. Added test dependencies `httpx` and `aiosqlite` and built a self-contained in-memory SQLite integration test suite `app/test_endpoints.py`. Improved DB connection fallback logic for local environments.
 * **2026-06-23:** Created SQLAlchemy ORM models (`Location`, `Category`, `Tailor`, `Service`, `PortfolioImage`, `Lead`) in `app/models/` and Pydantic validation schemas in `app/schemas/`. Created import validation test script `app/test_models.py`.
 * **2026-06-23:** Applied initial Supabase DDL schema migrations (`create_initial_schema`) and seeded database with 7 tailor profiles, categories, and services matching frontend specifications.

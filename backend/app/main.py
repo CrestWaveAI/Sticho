@@ -26,6 +26,15 @@ app.add_middleware(
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
+import os
+from fastapi.staticfiles import StaticFiles
+
+# Setup static directory
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+os.makedirs(os.path.join(static_dir, "media"), exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
 
 @app.get("/")
 async def root():

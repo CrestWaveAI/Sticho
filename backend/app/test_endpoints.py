@@ -1,6 +1,8 @@
 import asyncio
 import httpx
 import uuid
+import sqlite3
+from unittest.mock import patch
 from datetime import datetime
 from sqlalchemy import select, event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -17,12 +19,195 @@ from app.models.lead import Lead
 from app.core.db import get_db
 from app.main import app
 
-# Create in-memory SQLite engine for tests
-SQLITE_URL = "sqlite+aiosqlite:///:memory:"
+# Create in-memory SQLite engine for tests using shared cache (for sync and async access)
+SQLITE_URL = "sqlite+aiosqlite:///file:testmemdb?mode=memory&cache=shared&uri=true"
 test_engine = create_async_engine(SQLITE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(
     bind=test_engine, class_=AsyncSession, expire_on_commit=False
 )
+
+def normalize_val(val):
+    if isinstance(val, uuid.UUID):
+        return val.hex
+    elif isinstance(val, datetime):
+        return val.isoformat()
+    elif isinstance(val, str):
+        try:
+            return uuid.UUID(val).hex
+        except ValueError:
+            pass
+    return val
+
+class MockExecuteResult:
+    def __init__(self, data):
+        self.data = data
+
+class MockQueryBuilder:
+    def __init__(self, table_name, db_conn):
+        self.table_name = table_name
+        self.db_conn = db_conn
+        self.filters = []
+        self.limit_val = None
+        self.update_data = None
+        self.insert_data = None
+
+    def select(self, fields):
+        return self
+
+    def eq(self, field, value):
+        self.filters.append((field, "==", value))
+        return self
+
+    def or_(self, filter_str):
+        self.filters.append(("or", filter_str))
+        return self
+
+    def limit(self, val):
+        self.limit_val = val
+        return self
+
+    def update(self, data):
+        self.update_data = data
+        return self
+
+    def insert(self, data):
+        self.insert_data = data
+        return self
+
+    def delete(self):
+        self.is_delete = True
+        return self
+
+    def execute(self):
+        cursor = self.db_conn.cursor()
+        
+        # 0. Handle DELETE
+        if getattr(self, "is_delete", False):
+            where_clause = ""
+            where_vals = []
+            clauses = []
+            for field, op, val in self.filters:
+                clauses.append(f"{field} {op} ?")
+                where_vals.append(normalize_val(val))
+            if clauses:
+                where_clause = " WHERE " + " AND ".join(clauses)
+            sql = f"DELETE FROM {self.table_name}{where_clause}"
+            cursor.execute(sql, where_vals)
+            self.db_conn.commit()
+            return MockExecuteResult([])
+
+        # 1. Handle INSERT
+        if self.insert_data is not None:
+            cols = list(self.insert_data.keys())
+            vals = list(self.insert_data.values())
+            # Normalize values (UUIDs to hex, datetimes to ISO strings)
+            vals = [normalize_val(v) for v in vals]
+            placeholders = ", ".join(["?" for _ in vals])
+            sql = f"INSERT INTO {self.table_name} ({', '.join(cols)}) VALUES ({placeholders})"
+            cursor.execute(sql, vals)
+            self.db_conn.commit()
+            inserted_row = {k: normalize_val(v) for k, v in self.insert_data.items()}
+            return MockExecuteResult([inserted_row])
+
+        # 2. Handle UPDATE
+        if self.update_data is not None:
+            sets = []
+            vals = []
+            for k, v in self.update_data.items():
+                sets.append(f"{k} = ?")
+                vals.append(normalize_val(v))
+            
+            where_clause = ""
+            where_vals = []
+            clauses = []
+            for field, op, val in self.filters:
+                clauses.append(f"{field} {op} ?")
+                where_vals.append(normalize_val(val))
+            if clauses:
+                where_clause = " WHERE " + " AND ".join(clauses)
+                
+            sql = f"UPDATE {self.table_name} SET {', '.join(sets)}{where_clause}"
+            cursor.execute(sql, vals + where_vals)
+            self.db_conn.commit()
+
+        # 3. Handle SELECT
+        if self.table_name == "tailors":
+            sql = "SELECT * FROM tailors"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                if field == "is_verified":
+                    val = 1 if val else 0
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+                
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            tailors = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            for t in tailors:
+                t["is_verified"] = bool(t["is_verified"])
+                if t.get("location_id"):
+                    cursor.execute("SELECT * FROM locations WHERE id = ?", (t["location_id"],))
+                    loc_cols = [col[0] for col in cursor.description]
+                    loc_row = cursor.fetchone()
+                    t["locations"] = dict(zip(loc_cols, loc_row)) if loc_row else None
+                else:
+                    t["locations"] = None
+                
+                cursor.execute("SELECT * FROM services WHERE tailor_id = ?", (t["id"],))
+                srv_cols = [col[0] for col in cursor.description]
+                services = [dict(zip(srv_cols, r)) for r in cursor.fetchall()]
+                for s in services:
+                    cursor.execute("SELECT * FROM categories WHERE id = ?", (s["category_id"],))
+                    cat_cols = [col[0] for col in cursor.description]
+                    cat_row = cursor.fetchone()
+                    s["categories"] = dict(zip(cat_cols, cat_row)) if cat_row else None
+                t["services"] = services
+            return MockExecuteResult(tailors)
+
+        elif self.table_name == "locations":
+            sql = "SELECT * FROM locations"
+            params = []
+            for filt in self.filters:
+                if filt[0] == "or":
+                    import re
+                    match = re.search(r'name\.ilike\.(?:"%)?([^"%]+)(?:%")?', filt[1])
+                    if match:
+                        query_val = match.group(1)
+                        sql += " WHERE name LIKE ? OR city LIKE ? OR pin_code LIKE ?"
+                        params.extend([f"%{query_val}%", f"%{query_val}%", f"%{query_val}%"])
+            if self.limit_val:
+                sql += f" LIMIT {self.limit_val}"
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            locations = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return MockExecuteResult(locations)
+
+        elif self.table_name == "portfolio_images":
+            sql = "SELECT * FROM portfolio_images"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return MockExecuteResult(rows)
+
+        return MockExecuteResult([])
+
+class MockSupabaseClient:
+    def __init__(self, db_conn):
+        self.db_conn = db_conn
+
+    def table(self, table_name):
+        return MockQueryBuilder(table_name, self.db_conn)
 
 # Strip PostgreSQL schema names when using SQLite
 @event.listens_for(Base.metadata, "before_create")
@@ -114,6 +299,17 @@ async def run_tests():
         test_tailor_id = tailor.id
         test_cat_name = cat.name
         test_loc_name = loc.name
+        
+    # Start patcher for Supabase REST client during tests
+    db_conn = sqlite3.connect("file:testmemdb?mode=memory&cache=shared&uri=true", uri=True)
+    mock_client = MockSupabaseClient(db_conn)
+    patchers = [
+        patch("app.api.v1.endpoints.tailors.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.locations.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.leads.get_supabase", return_value=mock_client),
+    ]
+    for p in patchers:
+        p.start()
         
     # Create Async HTTP Client
     transport = httpx.ASGITransport(app=app)
@@ -317,6 +513,20 @@ async def run_tests():
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         print("  - Portfolio image deletion verified.")
         print("Test 8 Passed!")
+
+        # Test 9: GET /api/v1/locations/autocomplete?q=...
+        print("\nTest 9: Run Locations Autocomplete search")
+        response = await client.get("/api/v1/locations/autocomplete?q=Indi")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        locations_data = response.json()
+        assert len(locations_data) == 1, f"Expected 1 location, got {len(locations_data)}"
+        assert locations_data[0]["name"] == "Indiranagar", f"Expected Indiranagar, got {locations_data[0]['name']}"
+        print("  - Locations autocomplete query matched expected locality.")
+        print("Test 9 Passed!")
+        
+    for p in patchers:
+        p.stop()
+    db_conn.close()
 
     # Cleanup engine connection
     await test_engine.dispose()

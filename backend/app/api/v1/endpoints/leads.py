@@ -1,46 +1,48 @@
+"""
+Lead capture endpoint — uses Supabase REST client.
+"""
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, status
 
-from app.core.db import get_db
-from app.models.lead import Lead
-from app.models.tailor import Tailor
-from app.models.service import Service
+from app.core.supabase_client import get_supabase
 from app.schemas.lead import LeadCreate
 from app.schemas.tailor import TailorPrivateResponse
 
 router = APIRouter()
 
+
 @router.post("", response_model=TailorPrivateResponse, status_code=status.HTTP_201_CREATED)
-async def create_lead(
-    lead_in: LeadCreate,
-    db: AsyncSession = Depends(get_db),
-):
-    # 1. Verify if tailor exists
-    tailor_query = select(Tailor).where(Tailor.id == lead_in.tailor_id).options(
-        selectinload(Tailor.location),
-        selectinload(Tailor.services).selectinload(Service.category)
+async def create_lead(lead_in: LeadCreate):
+    sb = get_supabase()
+
+    # 1. Verify tailor exists and fetch full profile
+    tailor_data = (
+        sb.table("tailors")
+        .select("*, locations(*), services(*, categories(name))")
+        .eq("id", str(lead_in.tailor_id))
+        .execute()
+        .data
     )
-    result = await db.execute(tailor_query)
-    tailor = result.scalar_one_or_none()
-    
-    if not tailor:
+    if not tailor_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tailor with ID {lead_in.tailor_id} not found"
+            detail=f"Tailor with ID {lead_in.tailor_id} not found",
         )
-        
-    # 2. Create the lead
-    lead = Lead(
-        tailor_id=lead_in.tailor_id,
-        customer_name=lead_in.customer_name,
-        customer_mobile=lead_in.customer_mobile,
-        requirement_description=lead_in.requirement_description,
-    )
-    db.add(lead)
-    await db.flush() # Flush to populate ID and validate constraints
-    
-    # 3. Return the private tailor profile response (which includes contact_number)
-    return tailor
+
+    tailor_row = tailor_data[0]
+
+    # 2. Insert the lead
+    sb.table("leads").insert({
+        "id": str(uuid.uuid4()),
+        "tailor_id": str(lead_in.tailor_id),
+        "customer_name": lead_in.customer_name,
+        "customer_mobile": lead_in.customer_mobile,
+        "requirement_description": lead_in.requirement_description,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()
+
+    # 3. Return private tailor profile (includes contact_number)
+    from app.api.v1.endpoints.tailors import _row_to_public
+    public_dict = _row_to_public(tailor_row)
+    return {**public_dict, "contact_number": tailor_row.get("contact_number", "")}

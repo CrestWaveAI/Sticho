@@ -88,7 +88,7 @@ Test 3: Search tailors with category=Alterations
   - Match: Signature Threads with categories ['Alterations']
 Test 3 Passed!
 
-Test 4: Get tailor detail view for 29fbf875-fede-4c2f-b043-6cd4dad175ea
+Test 4: Get tailor detail view for 6ed6ab9b-68a6-4988-bd3e-a9789e942ea7
   - Detail view for Signature Threads verified (contact gated).
 Test 4 Passed!
 
@@ -97,5 +97,81 @@ Test 5: Submit lead to unlock contact info
   - Gated Contact Number unlocked: +91 98765 43210
 Test 5 Passed!
 
+Test 6: Update tailor profile details
+  - Profile update verified successfully.
+Test 6 Passed!
+
+Test 7: Run Services CRUD operations
+  - Service created successfully.
+  - Service updated successfully.
+  - List services for tailor boutique verified.
+  - Service deleted successfully.
+Test 7 Passed!
+
+Test 8: Run Portfolio Management operations
+  - Portfolio metadata added successfully.
+  - File type validation verified (text/plain rejected).
+  - File size validation verified (>5MB rejected).
+  - Valid portfolio file upload verified.
+  - Portfolio bulk reordering verified.
+  - Portfolio image limit of 20 verified.
+  - Portfolio image deletion verified.
+Test 8 Passed!
+
+Test 9: Run Locations Autocomplete search
+  - Locations autocomplete query matched expected locality.
+Test 9 Passed!
+
 All integration tests passed successfully against local SQLite database!
 ```
+
+---
+
+## 5. Frontend Lint & Build Verification
+
+To verify that the frontend contains no compilation errors or formatting/style issues, we run Next.js linting and static builds locally.
+
+### Executing Frontend Linting
+Run the following command from the `frontend/` root directory:
+```bash
+npm run lint
+```
+**Latest Output:**
+```text
+> temp_next_app@0.1.0 lint
+> eslint
+```
+*(Clean execution with zero errors and zero warnings)*
+
+### Executing Frontend Production Build
+Run the following command from the `frontend/` root directory:
+```bash
+npm run build
+```
+**Latest Output:**
+```text
+> temp_next_app@0.1.0 build
+> next build
+
+▲ Next.js 16.2.9 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.0s
+  Running TypeScript ...
+  Finished TypeScript in 2.3s ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 476ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+○  (Static)  prerendered as static content
+```
+*(Build successfully completed with zero TypeScript errors or bundle generation failures)*

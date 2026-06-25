@@ -9,10 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Fully implemented the portfolio management endpoints using the Supabase REST client in [tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py):
+  - `POST /api/v1/tailors/{tailor_id}/portfolio` (add portfolio metadata).
+  - `POST /api/v1/tailors/{tailor_id}/portfolio/upload` (validate file types and sizes, save files locally, insert database record).
+  - `PUT /api/v1/tailors/{tailor_id}/portfolio/reorder` (bulk reorder positions).
+  - `DELETE /api/v1/tailors/{tailor_id}/portfolio/{image_id}` (delete database record and local media file).
+- Implemented a complete mock Supabase REST client (`MockSupabaseClient`) in [test_endpoints.py](file:///Users/amankumar/Aman/Sticho/backend/app/test_endpoints.py) that translates PostgREST API query builder chains into synchronous SQLite operations.
+- Migrated local test environment in [test_endpoints.py](file:///Users/amankumar/Aman/Sticho/backend/app/test_endpoints.py) to a shared cache in-memory SQLite database (`sqlite+aiosqlite:///file:testmemdb?mode=memory&cache=shared&uri=true`) to share tables across async seeding and sync mock client connections.
+
 ### Changed
+- Rewrote the main endpoints ([tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py), [locations.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/locations.py), [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py)) to query the Supabase REST API via `supabase-py` instead of raw PostgreSQL `asyncpg` to bypass connection pooler routing issues and ensure IPv4 routing compatibility.
 - Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
 
 ### Fixed
+- Fixed `ResponseValidationError` on the `GET /api/v1/tailors` and `POST /api/v1/leads` endpoints by mapping the missing `created_at` field in nested location structures.
+- Refactored [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py) mapping logic to directly reuse `_row_to_public` from tailors endpoints, ensuring identical model representations.
 - Fixed ESLint errors in [page.tsx](file:///Users/amankumar/Aman/Sticho/frontend/src/app/page.tsx):
   - Removed unused `useTransition` and `startTransition`.
   - Changed `let params` to `const params` because it was never reassigned.

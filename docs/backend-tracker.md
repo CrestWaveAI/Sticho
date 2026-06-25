@@ -25,6 +25,7 @@ List of packages added via `uv add`:
 | `aiosqlite` | Asynchronous SQLite provider for local test environment | 2026-06-23 | Endpoints Testing |
 | `aiofiles` | Asynchronous file operations (needed for StaticFiles) | 2026-06-24 | Profile/Portfolio CRUD |
 | `python-multipart` | Parser for multipart form-data (needed for File uploads) | 2026-06-24 | Profile/Portfolio CRUD |
+| `supabase` | Python client for Supabase REST (PostgREST) API | 2026-06-25 | SCRUM-11 / DB Connection |
 
 ---
 
@@ -37,7 +38,8 @@ Track variables that must be added to `.env` to prevent broken local setups:
 | `DEBUG` | `True` / debug mode toggle | 2026-06-23 | No |
 | `DATABASE_URL` | Supabase connection string (Direct/Transaction Pooler) | 2026-06-23 | Yes |
 | `SUPABASE_URL` | Supabase Project API URL | 2026-06-23 | Yes |
-| `SUPABASE_KEY` | Supabase anon/service_role key | 2026-06-23 | Yes |
+| `SUPABASE_KEY` | Supabase anon key | 2026-06-23 | Yes |
+| `SUPABASE_SECRET_KEY`| Supabase service_role key to bypass RLS | 2026-06-25 | Yes |
 
 ---
 

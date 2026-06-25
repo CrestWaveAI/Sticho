@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
 
 ### Fixed
+- Fixed PostgREST logic tree parsing failure (`PGRST100`) on `GET /api/v1/locations/autocomplete` when search query term contains commas, by wrapping filter string values in double quotes.
 - Fixed `ResponseValidationError` on the `GET /api/v1/tailors` and `POST /api/v1/leads` endpoints by mapping the missing `created_at` field in nested location structures.
 - Refactored [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py) mapping logic to directly reuse `_row_to_public` from tailors endpoints, ensuring identical model representations.
 - Fixed ESLint errors in [page.tsx](file:///Users/amankumar/Aman/Sticho/frontend/src/app/page.tsx):

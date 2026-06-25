@@ -1,31 +1,30 @@
-import uuid
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.db import get_db
-from app.models.location import Location
+"""
+Locations autocomplete endpoint — uses Supabase REST client.
+"""
+from fastapi import APIRouter, Query, HTTPException
+from app.core.supabase_client import get_supabase
 from app.schemas.location import LocationResponse
 
 router = APIRouter()
 
+
 @router.get("/autocomplete", response_model=list[LocationResponse])
 async def autocomplete_locations(
-    q: str = Query(..., min_length=2, description="Search term for locality name, city, or pin code"),
-    db: AsyncSession = Depends(get_db),
+    q: str = Query(..., min_length=2, description="Search term for locality, city, or pin code"),
 ):
     """
-    Search cities, localities, or pin codes for auto-completion.
-    Limits results to 10.
+    Returns up to 10 locations matching the query across name, city, or pin_code.
     """
-    query = select(Location).where(
-        or_(
-            Location.name.ilike(f"%{q}%"),
-            Location.city.ilike(f"%{q}%"),
-            Location.pin_code.ilike(f"%{q}%")
-        )
-    ).limit(10)
-    
-    result = await db.execute(query)
-    locations = result.scalars().all()
-    return locations
+    sb = get_supabase()
+
+    # PostgREST: use `or` filter with ilike
+    data = (
+        sb.table("locations")
+        .select("*")
+        .or_(f"name.ilike.%{q}%,city.ilike.%{q}%,pin_code.ilike.%{q}%")
+        .limit(10)
+        .execute()
+        .data
+    ) or []
+
+    return data

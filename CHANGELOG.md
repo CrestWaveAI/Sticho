@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
 
 ### Fixed
-- Fixed `KeyError` on `SUPABASE_URL` during FastAPI app compilation validation in CI/CD environments by supplying fallback placeholder credentials in the Supabase REST client initialization.
+- Fixed `KeyError` on `SUPABASE_URL` during FastAPI app compilation validation in CI/CD environments by supplying fallback placeholder credentials in the Supabase REST client initialization, and injecting mock environment variables directly into the GitHub Actions Backend CI workflow validation step.
 - Fixed tailor search returning 0 results when selecting a location suggestion from autocomplete dropdown (containing commas/city info) by implementing bidirectional substring matching for locality and city checks on the backend.
 - Fixed PostgREST logic tree parsing failure (`PGRST100`) on `GET /api/v1/locations/autocomplete` when search query term contains commas, by wrapping filter string values in double quotes.
 - Fixed `ResponseValidationError` on the `GET /api/v1/tailors` and `POST /api/v1/leads` endpoints by mapping the missing `created_at` field in nested location structures.

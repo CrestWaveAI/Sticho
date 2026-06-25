@@ -1,8 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useRef } from "react";
 import Image from "next/image";
-import { tailors, Tailor } from "./tailorsData";
+import { 
+  fetchTailors, 
+  autocompleteLocations, 
+  submitLead, 
+  Tailor, 
+  LocationInfo 
+} from "./api";
 
 const ACTIVE_CATEGORIES = [
   "Men's",
@@ -16,50 +22,120 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [filteredTailors, setFilteredTailors] = useState<Tailor[]>(tailors);
-  
-  // We use simulated loading to represent async loading < 2s on broadband
-  const [isLoading, setIsLoading] = useState(false);
+  const [tailorsList, setTailorsList] = useState<Tailor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+
+  // Autocomplete suggestions
+  const [suggestions, setSuggestions] = useState<LocationInfo[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Lead Modal & Unlocked Gated contacts
+  const [selectedTailorForLead, setSelectedTailorForLead] = useState<Tailor | null>(null);
+  const [unlockedContacts, setUnlockedContacts] = useState<{ [tailorId: string]: string }>({});
+  
+  // Lead form fields
+  const [customerName, setCustomerName] = useState("");
+  const [customerMobile, setCustomerMobile] = useState("");
+  const [requirementDesc, setRequirementDesc] = useState("");
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
+  const [leadError, setLeadError] = useState("");
+
+  // Load unlocked contacts from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("unlocked_tailors");
+      if (stored) {
+        setUnlockedContacts(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load unlocked tailors from localStorage:", e);
+    }
+  }, []);
+
+  // Fetch tailors list on query or category change
+  useEffect(() => {
+    async function loadTailors() {
+      setIsLoading(true);
+      try {
+        // Query param resolution:
+        // We will query by category (using first active filter if selected)
+        // and match query based on freeform string
+        const categoryFilter = selectedCategories.length > 0 ? selectedCategories[0] : undefined;
+        
+        let params: { locality?: string; city?: string; pin_code?: string; category?: string } = {
+          category: categoryFilter,
+        };
+
+        const trimmedQuery = submittedQuery.trim();
+        if (trimmedQuery) {
+          // If it looks like a 6 digit pin code
+          if (/^\d{6}$/.test(trimmedQuery)) {
+            params.pin_code = trimmedQuery;
+          } else {
+            // Otherwise match locality name
+            params.locality = trimmedQuery;
+          }
+        }
+
+        const data = await fetchTailors(params);
+        
+        // If multiple categories are selected, filter client-side additionally
+        let finalData = data;
+        if (selectedCategories.length > 1) {
+          finalData = data.filter((tailor) =>
+            selectedCategories.every((cat) => tailor.categories.includes(cat))
+          );
+        }
+
+        setTailorsList(finalData);
+      } catch (err) {
+        console.error("Failed to load tailors:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadTailors();
+  }, [submittedQuery, selectedCategories]);
+
+  // Autocomplete fetcher
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        try {
+          const res = await autocompleteLocations(searchQuery);
+          setSuggestions(res);
+          setShowSuggestions(true);
+        } catch (e) {
+          console.error("Failed to fetch autocomplete suggestions:", e);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Search submit handler
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate API network delay (< 2s, e.g., 500ms)
-    setTimeout(() => {
-      setSubmittedQuery(searchQuery.trim());
-      setIsLoading(false);
-    }, 500);
+    setShowSuggestions(false);
+    setSubmittedQuery(searchQuery.trim());
   };
-
-  // Perform filtering & search matches
-  useEffect(() => {
-    startTransition(() => {
-      let results = tailors;
-
-      // 1. Geography Filter (City, Locality, or PIN Code)
-      if (submittedQuery) {
-        const query = submittedQuery.toLowerCase();
-        results = results.filter(
-          (tailor) =>
-            tailor.city.toLowerCase().includes(query) ||
-            tailor.locality.toLowerCase().includes(query) ||
-            tailor.pinCode.includes(query)
-        );
-      }
-
-      // 2. Category Filter
-      if (selectedCategories.length > 0) {
-        results = results.filter((tailor) =>
-          selectedCategories.some((cat) => (tailor.categories as string[]).includes(cat))
-        );
-      }
-
-      setFilteredTailors(results);
-    });
-  }, [submittedQuery, selectedCategories]);
 
   // Toggle category filters
   const handleCategoryToggle = (category: string) => {
@@ -75,6 +151,68 @@ export default function Home() {
     setSearchQuery("");
     setSubmittedQuery("");
     setSelectedCategories([]);
+  };
+
+  // Select autocomplete suggestion
+  const handleSuggestionSelect = (loc: LocationInfo) => {
+    const displayValue = `${loc.name}, ${loc.city}`;
+    setSearchQuery(displayValue);
+    setSubmittedQuery(displayValue);
+    setShowSuggestions(false);
+  };
+
+  // Submit Lead Capture
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTailorForLead) return;
+    setLeadError("");
+
+    // Simple validation
+    if (!customerName.trim()) {
+      setLeadError("Please enter your name.");
+      return;
+    }
+    const cleanMobile = customerMobile.replace(/\D/g, "");
+    if (cleanMobile.length < 10) {
+      setLeadError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!requirementDesc.trim()) {
+      setLeadError("Please describe your stitching requirements.");
+      return;
+    }
+
+    setIsSubmittingLead(true);
+    try {
+      const unlockedTailor = await submitLead({
+        tailor_id: selectedTailorForLead.id,
+        customer_name: customerName.trim(),
+        customer_mobile: cleanMobile,
+        requirement_description: requirementDesc.trim(),
+      });
+
+      if (unlockedTailor.contact_number) {
+        const updatedUnlocked = {
+          ...unlockedContacts,
+          [unlockedTailor.id]: unlockedTailor.contact_number,
+        };
+        setUnlockedContacts(updatedUnlocked);
+        localStorage.setItem("unlocked_tailors", JSON.stringify(updatedUnlocked));
+        
+        // Close modal
+        setSelectedTailorForLead(null);
+        setCustomerName("");
+        setCustomerMobile("");
+        setRequirementDesc("");
+      } else {
+        setLeadError("Failed to retrieve tailor contact info. Please try again.");
+      }
+    } catch (err) {
+      console.error("Failed to submit lead:", err);
+      setLeadError("Error registering your lead. Please try again.");
+    } finally {
+      setIsSubmittingLead(false);
+    }
   };
 
   return (
@@ -112,11 +250,11 @@ export default function Home() {
           Search Premium Tailors <span>by Location</span>
         </h1>
         <p className="hero-subtitle">
-          Find, filter, and book custom tailors and boutiques near you for the perfect fit.
+          Find, filter, and connect with custom tailors and boutiques near you for the perfect fit.
         </p>
 
         {/* Search Bar Container */}
-        <div className="search-container">
+        <div className="search-container" ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="search-form">
             <div className="search-input-wrapper">
               <svg 
@@ -136,9 +274,10 @@ export default function Home() {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Enter City, Locality, or PIN Code (e.g. Bangalore, Indiranagar, 560034)..."
+                placeholder="Enter City, Locality, or PIN Code (e.g. Bangalore, Indiranagar)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
               />
             </div>
             <button type="submit" className="search-button">
@@ -158,6 +297,25 @@ export default function Home() {
               </svg>
             </button>
           </form>
+
+          {/* Autocomplete suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="autocomplete-dropdown">
+              {suggestions.map((loc) => (
+                <div 
+                  key={loc.id} 
+                  className="autocomplete-item"
+                  onClick={() => handleSuggestionSelect(loc)}
+                >
+                  <span className="autocomplete-item-icon">📍</span>
+                  <div className="autocomplete-item-details">
+                    <span className="autocomplete-item-title">{loc.name}</span>
+                    <span className="autocomplete-item-subtitle">{loc.city} ({loc.pin_code})</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -200,7 +358,7 @@ export default function Home() {
                 "Updating listings..."
               ) : (
                 <>
-                  Showing <span>{filteredTailors.length}</span> tailor{filteredTailors.length !== 1 ? "s" : ""}
+                  Showing <span>{tailorsList.length}</span> tailor{tailorsList.length !== 1 ? "s" : ""}
                   {submittedQuery && ` in "${submittedQuery}"`}
                 </>
               )}
@@ -229,7 +387,7 @@ export default function Home() {
                   </div>
                 </div>
               ))
-            ) : filteredTailors.length === 0 ? (
+            ) : tailorsList.length === 0 ? (
               // Clean "No Results" state
               <div className="no-results">
                 <div className="no-results-icon">✂</div>
@@ -243,44 +401,147 @@ export default function Home() {
               </div>
             ) : (
               // Tailor cards
-              filteredTailors.map((tailor) => (
-                <article key={tailor.id} className="tailor-card">
-                  <div 
-                    className="card-img-gradient"
-                    style={{ background: tailor.gradient }}
-                  >
-                    <div className="card-logo">✂</div>
-                  </div>
-                  <div className="card-content">
-                    <div className="card-top">
-                      <h4 className="tailor-name">{tailor.name}</h4>
-                      <div className="rating-container">
-                        <span className="star-icon">★</span>
-                        <span className="rating-num">{tailor.rating}</span>
-                        <span className="reviews-count">({tailor.reviews})</span>
+              tailorsList.map((tailor) => {
+                const isUnlocked = tailor.id in unlockedContacts;
+                const contactNumber = unlockedContacts[tailor.id];
+                
+                return (
+                  <article key={tailor.id} className="tailor-card">
+                    <div 
+                      className="card-img-gradient"
+                      style={{ background: tailor.gradient }}
+                    >
+                      <div className="card-logo">✂</div>
+                    </div>
+                    <div className="card-content">
+                      <div className="card-top">
+                        <h4 className="tailor-name">{tailor.name}</h4>
+                        <div className="rating-container">
+                          <span className="star-icon">★</span>
+                          <span className="rating-num">{tailor.rating}</span>
+                          <span className="reviews-count">({tailor.reviews_count})</span>
+                        </div>
                       </div>
+                      <p className="location-info">
+                        {tailor.location.name}, {tailor.location.city} ({tailor.location.pin_code})
+                      </p>
+                      <p className="description">{tailor.bio || "No description provided."}</p>
+                      <div className="tag-container">
+                        {tailor.categories.map((cat) => (
+                          <span key={cat} className="tag">
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+
+                      {isUnlocked ? (
+                        <div className="unlocked-container">
+                          <div className="unlocked-title">
+                            <span>✅ Contact Details Unlocked</span>
+                          </div>
+                          <span className="unlocked-phone">{contactNumber}</span>
+                          <div className="contact-action-buttons">
+                            <a 
+                              href={`https://wa.me/${contactNumber.replace(/\D/g, "")}`} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="contact-action-btn whatsapp"
+                            >
+                              WhatsApp
+                            </a>
+                            <a 
+                              href={`tel:${contactNumber}`} 
+                              className="contact-action-btn call"
+                            >
+                              Call Direct
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setSelectedTailorForLead(tailor)}
+                          className="card-btn"
+                        >
+                          Contact Tailor
+                        </button>
+                      )}
                     </div>
-                    <p className="location-info">
-                      {tailor.locality}, {tailor.city} ({tailor.pinCode})
-                    </p>
-                    <p className="description">{tailor.description}</p>
-                    <div className="tag-container">
-                      {tailor.categories.map((cat) => (
-                        <span key={cat} className="tag">
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                    <button className="card-btn">
-                      Book Appointment
-                    </button>
-                  </div>
-                </article>
-              ))
+                  </article>
+                );
+              })
             )}
           </div>
         </section>
       </main>
+
+      {/* Lead Capture Modal */}
+      {selectedTailorForLead && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <button 
+              onClick={() => setSelectedTailorForLead(null)}
+              className="modal-close"
+            >
+              &times;
+            </button>
+            <h3 className="modal-title">Contact {selectedTailorForLead.name}</h3>
+            <p className="modal-subtitle">
+              Submit your contact details and requirements to unlock this tailor&apos;s contact information.
+            </p>
+
+            <form onSubmit={handleLeadSubmit}>
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. John Doe"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Mobile Number</label>
+                <input 
+                  type="tel" 
+                  className="form-input" 
+                  placeholder="e.g. 9876543210"
+                  value={customerMobile}
+                  onChange={(e) => setCustomerMobile(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">What do you want stitched/altered?</label>
+                <textarea 
+                  className="form-textarea" 
+                  placeholder="e.g. Need a custom-fit wedding suit stitched with premium velvet lapels."
+                  value={requirementDesc}
+                  onChange={(e) => setRequirementDesc(e.target.value)}
+                  required
+                />
+              </div>
+
+              {leadError && (
+                <div style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.5rem", textAlign: "left" }}>
+                  ⚠️ {leadError}
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className="form-submit-btn"
+                disabled={isSubmittingLead}
+              >
+                {isSubmittingLead ? "Submitting..." : "Unlock Contact Details"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

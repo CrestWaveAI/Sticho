@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Rewrote the main endpoints ([tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py), [locations.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/locations.py), [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py)) to query the Supabase REST API via `supabase-py` instead of raw PostgreSQL `asyncpg` to bypass connection pooler routing issues and ensure IPv4 routing compatibility.
 - Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
+- Added `SUPABASE_SECRET_KEY` environment variable placeholder to [backend/.env.example](file:///Users/amankumar/Aman/Sticho/backend/.env.example) to ensure teammates set up the required service role key to bypass RLS and avoid database permission errors.
+
 
 ### Fixed
 - Fixed `KeyError` on `SUPABASE_URL` during FastAPI app compilation validation in CI/CD environments by supplying fallback placeholder credentials in the Supabase REST client initialization, and injecting mock environment variables directly into the GitHub Actions Backend CI workflow validation step.

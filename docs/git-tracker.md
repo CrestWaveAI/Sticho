@@ -6,7 +6,9 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | Branch Name | Base Branch | Purpose | Author | Status |
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
+| `bugfix/backend-env-setup-SCRUM-40` | `develop` | Add SUPABASE_SECRET_KEY placeholder to .env.example template | Antigravity | PR [#16](https://github.com/CrestWaveAI/Stichoh/pull/16) Opened |
 | `feature/frontend-integration-SCRUM-11` | `develop` | Integrate customer search/filtering page, search autocomplete, and lead capture modal | Antigravity | Active (Lint, Build, & Tests Pass) |
+
 
 ---
 

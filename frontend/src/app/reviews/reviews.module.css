@@ -1,0 +1,164 @@
+.container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+}
+
+.titleArea h1 {
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-ink-muted);
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.aggregateRating {
+  text-align: center;
+  background-color: var(--color-surface);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-1);
+}
+
+.ratingValue {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.ratingLabel {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.customerName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.orderRef {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+.ratingStars {
+  font-size: 1.2rem;
+}
+
+.starFilled {
+  color: var(--color-accent);
+}
+
+.starEmpty {
+  color: var(--color-border);
+}
+
+.comment {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  font-style: italic;
+}
+
+.reviewFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-canvas);
+}
+
+.date {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+}
+
+.responseBox {
+  background-color: var(--color-canvas);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  max-width: 70%;
+  text-align: left;
+}
+
+.responseLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  margin-bottom: 0.25rem;
+}
+
+.responseText {
+  font-size: 0.85rem;
+  margin: 0;
+  color: var(--color-ink);
+}
+
+.respondBtn {
+  font-size: 0.8rem;
+}
+
+.responseForm {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--color-canvas);
+  border-radius: var(--radius-sm);
+}
+
+.responseForm textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  resize: vertical;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

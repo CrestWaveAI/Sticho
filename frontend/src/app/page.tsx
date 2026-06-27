@@ -33,7 +33,14 @@ export default function Home() {
 
   // Lead Modal & Unlocked Gated contacts
   const [selectedTailorForLead, setSelectedTailorForLead] = useState<Tailor | null>(null);
-  const [unlockedContacts, setUnlockedContacts] = useState<{ [tailorId: string]: string }>({});
+  const [unlockedContacts, setUnlockedContacts] = useState<{ 
+    [tailorId: string]: string | {
+      contact_number: string;
+      whatsapp_number?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+    } 
+  }>({});
   
   // Lead form fields
   const [customerName, setCustomerName] = useState("");
@@ -202,7 +209,12 @@ export default function Home() {
       if (unlockedTailor.contact_number) {
         const updatedUnlocked = {
           ...unlockedContacts,
-          [unlockedTailor.id]: unlockedTailor.contact_number,
+          [unlockedTailor.id]: {
+            contact_number: unlockedTailor.contact_number,
+            whatsapp_number: unlockedTailor.whatsapp_number || unlockedTailor.contact_number,
+            latitude: unlockedTailor.latitude,
+            longitude: unlockedTailor.longitude,
+          },
         };
         setUnlockedContacts(updatedUnlocked);
         localStorage.setItem("unlocked_tailors", JSON.stringify(updatedUnlocked));
@@ -411,7 +423,6 @@ export default function Home() {
               // Tailor cards
               tailorsList.map((tailor) => {
                 const isUnlocked = tailor.id in unlockedContacts;
-                const contactNumber = unlockedContacts[tailor.id];
                 
                 return (
                   <article key={tailor.id} className="tailor-card">
@@ -447,23 +458,63 @@ export default function Home() {
                           <div className="unlocked-title">
                             <span>✅ Contact Details Unlocked</span>
                           </div>
-                          <span className="unlocked-phone">{contactNumber}</span>
-                          <div className="contact-action-buttons">
-                            <a 
-                              href={`https://wa.me/${contactNumber.replace(/\D/g, "")}`} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="contact-action-btn whatsapp"
-                            >
-                              WhatsApp
-                            </a>
-                            <a 
-                              href={`tel:${contactNumber}`} 
-                              className="contact-action-btn call"
-                            >
-                              Call Direct
-                            </a>
-                          </div>
+                          {(() => {
+                            const contact = unlockedContacts[tailor.id];
+                            const phone = typeof contact === "string" ? contact : (contact?.contact_number || "");
+                            const whatsapp = typeof contact === "string" ? contact : (contact?.whatsapp_number || contact?.contact_number || "");
+                            const lat = typeof contact === "string" ? null : (contact?.latitude ?? null);
+                            const lng = typeof contact === "string" ? null : (contact?.longitude ?? null);
+
+                            return (
+                              <>
+                                <div className="unlocked-details">
+                                  <div className="unlocked-detail-item">
+                                    <span className="unlocked-label">📞 Call:</span>
+                                    <span className="unlocked-val">{phone}</span>
+                                  </div>
+                                  <div className="unlocked-detail-item">
+                                    <span className="unlocked-label">💬 WhatsApp:</span>
+                                    <span className="unlocked-val">{whatsapp}</span>
+                                  </div>
+                                  <div className="unlocked-detail-item">
+                                    <span className="unlocked-label">📍 Address:</span>
+                                    <span className="unlocked-val">{tailor.address}</span>
+                                  </div>
+                                  {lat !== null && lng !== null && (
+                                    <div className="unlocked-detail-item">
+                                      <span className="unlocked-label">🗺️ Map Pin:</span>
+                                      <span className="unlocked-val">
+                                        <a 
+                                          href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="map-link"
+                                        >
+                                          View on Google Maps ({lat.toFixed(4)}, {lng.toFixed(4)})
+                                        </a>
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="contact-action-buttons">
+                                  <a 
+                                    href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="contact-action-btn whatsapp"
+                                  >
+                                    WhatsApp
+                                  </a>
+                                  <a 
+                                    href={`tel:${phone}`} 
+                                    className="contact-action-btn call"
+                                  >
+                                    Call Direct
+                                  </a>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       ) : (
                         <button 

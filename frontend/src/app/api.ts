@@ -31,6 +31,9 @@ export interface Tailor {
   categories: string[];
   services?: ServiceDetail[];
   contact_number?: string; // Gated, only unlocked after lead submission
+  latitude?: number | null;
+  longitude?: number | null;
+  whatsapp_number?: string;
 }
 
 export interface LeadPayload {

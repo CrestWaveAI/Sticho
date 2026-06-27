@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated search tailors endpoint `GET /api/v1/tailors` to support multiple categories via `list[str]` query parameter and perform multi-category search filtering.
 - Updated local SQLite mock PostgREST client and test database seeds in `test_endpoints.py` to support `categories` and `otp_codes` tables.
 - Added Integration Tests 10, 11, 12, and 13 to verify categories listing, OTP workflow, profile creation, and multi-category filters.
+- Added [docs/frontend/README.md](file:///Users/amankumar/Aman/Sticho/docs/frontend/README.md) to document frontend performance optimizations and API connection fallbacks (GH-13, GH-14).
 - Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`:
   - Added `experience`, `latitude`, `longitude`, and `working_hours` columns to `public.tailors` table.
   - Added `position` column to `public.portfolio_images` table.
@@ -37,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated local test environment in [test_endpoints.py](file:///Users/amankumar/Aman/Sticho/backend/app/test_endpoints.py) to a shared cache in-memory SQLite database (`sqlite+aiosqlite:///file:testmemdb?mode=memory&cache=shared&uri=true`) to share tables across async seeding and sync mock client connections.
 
 ### Changed
+- Resolved Next.js scroll performance jitter by shifting the background image to a dedicated GPU compositor layer on `body::before` with `will-change: transform` (GH-14).
+- Changed frontend API base connection address to `http://127.0.0.1:8000` to prevent network loopback failures on local systems resolving localhost to IPv6 (GH-13).
+- Configured frontend search field inputs to split queries containing commas into separate `locality` and `city` query parameters before sending them to the API (GH-13).
 - Rewrote the main endpoints ([tailors.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/tailors.py), [locations.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/locations.py), [leads.py](file:///Users/amankumar/Aman/Sticho/backend/app/api/v1/endpoints/leads.py)) to query the Supabase REST API via `supabase-py` instead of raw PostgreSQL `asyncpg` to bypass connection pooler routing issues and ensure IPv4 routing compatibility.
 - Updated repository and agent rules in [.agents/AGENTS.md](file:///Users/amankumar/Aman/Sticho/.agents/AGENTS.md), [.agents/rules/frontend-standards.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/frontend-standards.md), and [.agents/rules/git-workflow.md](file:///Users/amankumar/Aman/Sticho/.agents/rules/git-workflow.md) to require running `npm run lint` and resolving all errors/warnings before pushing or committing code.
 - Added `SUPABASE_SECRET_KEY` environment variable placeholder to [backend/.env.example](file:///Users/amankumar/Aman/Sticho/backend/.env.example) to ensure teammates set up the required service role key to bypass RLS and avoid database permission errors.

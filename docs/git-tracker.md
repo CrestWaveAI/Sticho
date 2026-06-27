@@ -15,6 +15,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 ## 2. Completed / Merged Pull Requests
 | PR # | Source Branch | Target Branch | Approved By | Date Merged | Description / Ticket Key |
 |---|---|---|---|---|---|
+| [#18](https://github.com/CrestWaveAI/Stichoh/pull/18) | `bugfix/frontend-issues-13-14` | `develop` | User (approved via chat) | 2026-06-27 | Resolve scroll jitter and autocomplete loopback (GH-13, GH-14) |
 | [#17](https://github.com/CrestWaveAI/Stichoh/pull/17) | `feature/backend-tailor-otp-registration-SCRUM-20` | `develop` | User (approved via chat) | 2026-06-27 | Implement OTP verification, categories list, and gated profile creation (SCRUM-20, SCRUM-21, SCRUM-12) |
 | [#15](https://github.com/CrestWaveAI/Stichoh/pull/15) | `feature/backend-profile-details-SCRUM-15` | `develop` | User (via MCP merge) | 2026-06-25 | Implement detailed tailor profile fields and view page endpoints (SCRUM-15) |
 | [#11](https://github.com/CrestWaveAI/Stichoh/pull/11) | `feature/backend-profile-SCRUM-21` | `develop` | User (approved via chat) | 2026-06-25 | Implemented tailor profile CRUD, services CRUD, and portfolio upload/reordering (SCRUM-21) |

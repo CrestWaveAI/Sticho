@@ -12,6 +12,8 @@ This directory is used to track every change, decision, branch, and feature impl
    * Architecture Decision Records (ADRs) explaining technical choices (e.g., choice of DB, authentication methods).
 4. **[Testing Guide](file:///Users/amankumar/Aman/Sticho/docs/testing.md)**
    * Instructions for running backend unit and integration tests and logs of execution results.
+5. **[Frontend Documentation](file:///Users/amankumar/Aman/Sticho/docs/frontend/README.md)**
+   * Outlines frontend scroll performance optimizations and autocomplete connection fixes.
 
 ---
 

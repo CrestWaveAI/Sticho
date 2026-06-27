@@ -81,6 +81,11 @@ Detailed models, columns, and validation schemas implemented:
 * **Fields:** `id` (UUID, PK), `tailor_id` (UUID, FK), `customer_name` (String), `customer_mobile` (String), `requirement_description` (Text), `created_at` (DateTime)
 * **Schemas:** `LeadCreate`, `LeadResponse`
 
+### 7. OTP Codes (`OTPCode` model)
+* **Table:** `public.otp_codes`
+* **Fields:** `id` (UUID, PK), `phone_number` (String), `code` (String), `created_at` (DateTime), `expires_at` (DateTime), `is_verified` (Boolean)
+* **Schemas:** `OTPSendRequest`, `OTPVerifyRequest`, `OTPVerifyResponse`
+
 ---
 
 ## 5. Database Migrations Log
@@ -89,6 +94,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 |---|---|---|---|---|
 | `create_initial_schema` | Supabase SQL DDL migration setting up the core 6 tables and indexes | Up | Low | Applied |
 | `add_tailor_profile_fields` | Adds experience, latitude, longitude, and working_hours to tailors, and position to portfolio_images | Up | Low | Applied |
+| `add_otp_codes_table` | Adds otp_codes table to public schema for tracking SMS OTP sessions | Up | Low | Applied |
 
 ---
 
@@ -110,6 +116,10 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `DELETE` | `/api/v1/services/{service_id}` | Services | No | Delete a service listing | Active |
 | `GET` | `/api/v1/services/tailor/{tailor_id}` | Services | No | Retrieve all services for a specific tailor boutique | Active |
 | `POST` | `/api/v1/leads` | Leads | No | Submit a customer lead for a tailor; returns unlocked tailor contact details | Active |
+| `GET` | `/api/v1/categories` | Categories | No | Retrieve all tailor specializations / categories | Active |
+| `POST` | `/api/v1/auth/otp/send` | Auth | No | Send a 6-digit verification code to a phone number | Active |
+| `POST` | `/api/v1/auth/otp/verify` | Auth | No | Verify a phone number using the received OTP code | Active |
+| `POST` | `/api/v1/tailors` | Tailors | No | Register a new tailor profile (requires OTP verification) | Active |
 
 ---
 
@@ -123,6 +133,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-27:** Implemented tailor registration via phone OTP (`SCRUM-20`), tailor profile creation (`SCRUM-21`), and multi-category filtering (`SCRUM-12`). Created `OTPCode` model/schemas, endpoints for sending/verifying OTP codes, categories listing, and a create tailor profile route gated on OTP verification. Updated the SQLite mock PostgREST client and test seeds, adding Tests 10-13 to the integration test suite.
 * **2026-06-25:** Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`. Expanded `tailors` database schema on Supabase with `experience`, `latitude`, `longitude`, `working_hours`, and `portfolio_images.position`. Enforced verification gate on `GET /api/v1/tailors/{tailor_id}`. Updated integration test suite `test_endpoints.py` to verify all updates.
 * **2026-06-25:** Implemented search autocomplete locations endpoint (`GET /api/v1/locations/autocomplete`) matching locality name, city, or pin code with limit of 10. Added Test 9 to `test_endpoints.py` to verify locations autocomplete querying.
 * **2026-06-24:** Implemented tailor profile CRUD (`PUT /api/v1/tailors/{tailor_id}`), Services CRUD (`POST/PUT/DELETE /api/v1/services` and `GET /services/tailor/{tailor_id}`), and Portfolio Management APIs (`POST/PUT/DELETE` portfolio images, reordering endpoints, and file upload size/type validation with local storage fallback). Added dependencies `aiofiles` and `python-multipart`. Mounted `StaticFiles` middleware in `app/main.py`. Updated `test_endpoints.py` to cover all new CRUD APIs.

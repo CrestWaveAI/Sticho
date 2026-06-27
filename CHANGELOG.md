@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented Tailor Registration via Phone OTP under task `SCRUM-20`:
+  - Created `OTPCode` SQLAlchemy ORM model and schema to track OTP codes, expiration, and verification status.
+  - Implemented `POST /api/v1/auth/otp/send` to check phone registration and generate a random 6-digit verification code.
+  - Implemented `POST /api/v1/auth/otp/verify` to validate codes, check expiration, and mark verification status.
+- Implemented Create Tailor Profile under task `SCRUM-21`:
+  - Implemented `POST /api/v1/tailors` to register new tailor profiles, enforcing contact number uniqueness and active OTP verification check gates.
+- Implemented List Service Categories under task `SCRUM-12`:
+  - Implemented `GET /api/v1/categories` to retrieve service specializations.
+  - Updated search tailors endpoint `GET /api/v1/tailors` to support multiple categories via `list[str]` query parameter and perform multi-category search filtering.
+- Updated local SQLite mock PostgREST client and test database seeds in `test_endpoints.py` to support `categories` and `otp_codes` tables.
+- Added Integration Tests 10, 11, 12, and 13 to verify categories listing, OTP workflow, profile creation, and multi-category filters.
 - Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`:
   - Added `experience`, `latitude`, `longitude`, and `working_hours` columns to `public.tailors` table.
   - Added `position` column to `public.portfolio_images` table.

@@ -74,6 +74,7 @@ async def init_sqlite_db():
     from app.models.location import Location
     from app.models.category import Category
     from app.models.tailor import Tailor
+    from app.models.otp import OTPCode
     
     # Strip schema names from metadata tables permanently for SQLite
     if engine.url.drivername.startswith("sqlite"):

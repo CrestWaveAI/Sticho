@@ -16,6 +16,7 @@ from app.models.tailor import Tailor
 from app.models.service import Service
 from app.models.portfolio import PortfolioImage
 from app.models.lead import Lead
+from app.models.otp import OTPCode
 
 from app.core.db import get_db
 from app.main import app
@@ -214,6 +215,36 @@ class MockQueryBuilder:
             rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
             return MockExecuteResult(rows)
 
+        elif self.table_name == "categories":
+            sql = "SELECT * FROM categories"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return MockExecuteResult(rows)
+
+        elif self.table_name == "otp_codes":
+            sql = "SELECT * FROM otp_codes"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for r in rows:
+                r["is_verified"] = bool(r["is_verified"])
+            return MockExecuteResult(rows)
+
         return MockExecuteResult([])
 
 class MockSupabaseClient:
@@ -273,7 +304,13 @@ async def run_tests():
             description="Alterations specialization",
             created_at=datetime.utcnow()
         )
-        session.add(cat)
+        cat2 = Category(
+            id=uuid.uuid4(),
+            name="Men's",
+            description="Men's tailoring",
+            created_at=datetime.utcnow()
+        )
+        session.add_all([cat, cat2])
         
         await session.flush()
         
@@ -344,6 +381,8 @@ async def run_tests():
         patch("app.api.v1.endpoints.tailors.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.locations.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.leads.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.categories.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.auth.get_supabase", return_value=mock_client),
     ]
     for p in patchers:
         p.start()
@@ -578,6 +617,93 @@ async def run_tests():
         assert locations_data[0]["name"] == "Indiranagar", f"Expected Indiranagar, got {locations_data[0]['name']}"
         print("  - Locations autocomplete query matched expected locality.")
         print("Test 9 Passed!")
+
+        # Test 10: GET /api/v1/categories
+        print("\nTest 10: Run Categories list")
+        response = await client.get("/api/v1/categories")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        categories_data = response.json()
+        assert len(categories_data) >= 2, f"Expected at least 2 categories, got {len(categories_data)}"
+        cats_list = [c["name"] for c in categories_data]
+        assert "Men's" in cats_list
+        assert "Alterations" in cats_list
+        print("  - Categories listed successfully.")
+        print("Test 10 Passed!")
+
+        # Test 11: Tailor Registration via Phone OTP
+        print("\nTest 11: Run Tailor OTP send and verify")
+        # 1. Send OTP (Success)
+        phone_num = "+91 99999 88888"
+        response = await client.post("/api/v1/auth/otp/send", json={"phone_number": phone_num})
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        send_data = response.json()
+        assert send_data["phone_number"] == phone_num
+        assert "otp" in send_data
+        received_otp = send_data["otp"]
+        print("  - OTP code sent successfully.")
+
+        # 2. Send OTP (Duplicate Check)
+        response = await client.post("/api/v1/auth/otp/send", json={"phone_number": "+91 98765 43210"})
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "already registered" in response.json()["detail"]
+        print("  - Duplicate phone check verified.")
+
+        # 3. Verify OTP (Fail - wrong code)
+        response = await client.post("/api/v1/auth/otp/verify", json={"phone_number": phone_num, "code": "000000"})
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "Invalid OTP code" in response.json()["detail"]
+        print("  - Invalid code verification rejected.")
+
+        # 4. Verify OTP (Success)
+        response = await client.post("/api/v1/auth/otp/verify", json={"phone_number": phone_num, "code": received_otp})
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert response.json()["success"] is True
+        print("  - OTP code verified successfully.")
+        print("Test 11 Passed!")
+
+        # Test 12: Create Tailor Profile (POST /api/v1/tailors)
+        print("\nTest 12: Run Tailor profile creation")
+        # 1. Post Tailor (Fail - unverified phone)
+        unverified_payload = {
+            "name": "Bespoke Boutique",
+            "email": "bespoke@example.com",
+            "bio": "Fine boutique designs.",
+            "address": "456, 12th Main, Indiranagar, Bangalore",
+            "contact_number": "+91 88888 77777",
+            "location_id": "6ed6ab9b-68a6-4988-bd3e-a9789e942ea7"
+        }
+        response = await client.post("/api/v1/tailors", json=unverified_payload)
+        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
+        assert "not verified via OTP" in response.json()["detail"]
+        print("  - Profile creation without OTP verification blocked.")
+
+        # 2. Post Tailor (Success - verified phone)
+        verified_payload = {
+            "name": "Bespoke Boutique",
+            "email": "bespoke@example.com",
+            "bio": "Fine boutique designs.",
+            "address": "456, 12th Main, Indiranagar, Bangalore",
+            "contact_number": phone_num,
+            "location_id": "6ed6ab9b-68a6-4988-bd3e-a9789e942ea7"
+        }
+        response = await client.post("/api/v1/tailors", json=verified_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        new_tailor = response.json()
+        assert new_tailor["name"] == "Bespoke Boutique"
+        assert new_tailor["is_verified"] is False
+        assert new_tailor["contact_number"] == phone_num
+        print("  - Tailor profile created successfully with default pending verification status.")
+        print("Test 12 Passed!")
+
+        # Test 13: Multi-Category Search Filtering
+        print("\nTest 13: Run Multi-Category Search Filtering")
+        response = await client.get("/api/v1/tailors?category=Alterations&category=NonExistent")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        search_data = response.json()
+        assert len(search_data) >= 1
+        assert any(t["name"] == "Signature Boutique" for t in search_data)
+        print("  - Multi-category search filter returned matching tailors successfully.")
+        print("Test 13 Passed!")
         
     for p in patchers:
         p.stop()

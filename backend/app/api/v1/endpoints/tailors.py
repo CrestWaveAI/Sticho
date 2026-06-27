@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Any
 
 from app.core.supabase_client import get_supabase
-from app.schemas.tailor import TailorPublicResponse, TailorDetailResponse, TailorPrivateResponse, TailorUpdate
+from app.schemas.tailor import TailorPublicResponse, TailorDetailResponse, TailorPrivateResponse, TailorUpdate, TailorCreate
 from app.schemas.portfolio import PortfolioImagePositionUpdate
 
 router = APIRouter()
@@ -93,7 +93,7 @@ async def search_tailors(
     locality: str | None = Query(None),
     city: str | None = Query(None),
     pin_code: str | None = Query(None),
-    category: str | None = Query(None),
+    category: list[str] | None = Query(None),
 ):
     sb = get_supabase()
 
@@ -103,6 +103,14 @@ async def search_tailors(
     ).eq("is_verified", True)
 
     data = q.execute().data or []
+
+    # Handle string or list of categories for flexibility/compatibility
+    category_list = []
+    if category:
+        if isinstance(category, str):
+            category_list = [category]
+        else:
+            category_list = list(category)
 
     # Post-filter by location fields (PostgREST doesn't support nested ilike easily)
     results = []
@@ -120,17 +128,83 @@ async def search_tailors(
                 continue
         if pin_code and pin_code != (loc.get("pin_code") or ""):
             continue
-        if category:
+        if category_list:
             cats = [
                 s["categories"]["name"].lower()
                 for s in (row.get("services") or [])
                 if s.get("categories")
             ]
-            if not any(category.lower() in c for c in cats):
+            # Match if any of the query categories match any of the tailor's categories
+            match_found = False
+            for q_cat in category_list:
+                if any(q_cat.lower() in c for c in cats):
+                    match_found = True
+                    break
+            if not match_found:
                 continue
         results.append(_row_to_public(row))
 
     return results
+
+
+@router.post("", response_model=TailorPrivateResponse)
+async def create_tailor(tailor_in: TailorCreate):
+    """
+    Register a new tailor profile.
+    Checks that the phone number is not registered and has been verified via OTP.
+    """
+    sb = get_supabase()
+    
+    # 1. Check if phone number is already registered under any tailor
+    tailors = sb.table("tailors").select("id").eq("contact_number", tailor_in.contact_number).execute().data
+    if tailors:
+        raise HTTPException(status_code=400, detail="Phone number already registered")
+        
+    # 2. Check if the phone number has been verified via OTP
+    otp_verified = (
+        sb.table("otp_codes")
+        .select("id")
+        .eq("phone_number", tailor_in.contact_number)
+        .eq("is_verified", True)
+        .execute()
+        .data
+    )
+    if not otp_verified:
+        raise HTTPException(status_code=400, detail="Phone number is not verified via OTP")
+        
+    # 3. Create the tailor profile (default is_verified = False)
+    tailor_id = str(uuid.uuid4())
+    new_tailor = {
+        "id": tailor_id,
+        "name": tailor_in.name,
+        "email": tailor_in.email,
+        "bio": tailor_in.bio,
+        "address": tailor_in.address,
+        "gradient": tailor_in.gradient,
+        "contact_number": tailor_in.contact_number,
+        "location_id": str(tailor_in.location_id) if tailor_in.location_id else None,
+        "is_verified": False,
+        "rating": 0.0,
+        "reviews_count": 0,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    result = (
+        sb.table("tailors")
+        .insert(new_tailor)
+        .select("*, locations(*)")
+        .execute()
+        .data
+    )
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create tailor profile")
+        
+    row = result[0]
+    # Add empty services and portfolio images list to populate detailed view
+    row["services"] = []
+    row["portfolio_images"] = []
+    detail_dict = _row_to_detail(row)
+    return {**detail_dict, "contact_number": row.get("contact_number", "")}
 
 
 @router.get("/{tailor_id}", response_model=TailorDetailResponse)

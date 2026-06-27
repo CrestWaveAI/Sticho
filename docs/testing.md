@@ -126,6 +126,26 @@ Test 9: Run Locations Autocomplete search
   - Locations autocomplete query matched expected locality.
 Test 9 Passed!
 
+Test 10: Run Categories list
+  - Categories listed successfully.
+Test 10 Passed!
+
+Test 11: Run Tailor OTP send and verify
+  - OTP code sent successfully.
+  - Duplicate phone check verified.
+  - Invalid code verification rejected.
+  - OTP code verified successfully.
+Test 11 Passed!
+
+Test 12: Run Tailor profile creation
+  - Profile creation without OTP verification blocked.
+  - Tailor profile created successfully with default pending verification status.
+Test 12 Passed!
+
+Test 13: Run Multi-Category Search Filtering
+  - Multi-category search filter returned matching tailors successfully.
+Test 13 Passed!
+
 All integration tests passed successfully against local SQLite database!
 ```
 

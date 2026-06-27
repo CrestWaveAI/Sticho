@@ -36,12 +36,24 @@ body {
   font-family: 'Outfit', sans-serif;
   color: var(--foreground);
   background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize scroll performance by moving fixed background to its own compositor layer */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -10;
   background-image: 
     radial-gradient(circle at 10% 20%, rgba(191, 145, 172, 0.05) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(191, 145, 172, 0.05) 0%, transparent 40%);
-  background-attachment: fixed;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  pointer-events: none;
+  will-change: transform;
 }
 
 a {

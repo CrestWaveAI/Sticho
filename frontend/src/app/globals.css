@@ -142,6 +142,28 @@ a {
   color: var(--primary);
 }
 
+.nav-btn {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary) 0%, #7d4d68 100%);
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(191, 145, 172, 0.25);
+  display: flex;
+  align-items: center;
+}
+
+.nav-btn:hover {
+  color: #ffffff;
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(191, 145, 172, 0.4);
+}
+
 /* Hero Section */
 .hero {
   position: relative;

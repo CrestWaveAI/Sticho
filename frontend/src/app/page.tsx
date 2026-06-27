@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { 
   fetchTailors, 
   autocompleteLocations, 
@@ -250,10 +251,11 @@ export default function Home() {
           />
           <span className="logo-text">Stichoh</span>
         </div>
-        <nav className="nav-links">
+        <nav className="nav-links" style={{ alignItems: "center" }}>
           <a href="#" className="nav-link active">Explore Tailors</a>
           <a href="#" className="nav-link">Bookings</a>
           <a href="#" className="nav-link">How it Works</a>
+          <Link href="/dashboard" className="nav-btn">Tailor Portal</Link>
         </nav>
       </header>
 

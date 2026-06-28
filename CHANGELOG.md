@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented separate WhatsApp and Call number support under task `SCRUM-25`:
+  - Added `whatsapp_number` column to `public.tailors` database table.
+  - Added `whatsapp_number` field to SQLAlchemy `Tailor` model.
+  - Updated `TailorCreate`, `TailorPrivateResponse`, and `TailorUpdate` Pydantic validation schemas to include `whatsapp_number` for gated contact detail access.
+  - Updated mapping functions in `create_tailor` and `update_tailor_profile` in `endpoints/tailors.py` to insert, update, and return the `whatsapp_number` securely.
+  - Updated `create_lead` in `endpoints/leads.py` to return the unlocked `whatsapp_number` upon lead submission.
+  - Updated test seeds and added assertions to Test 5 (lead contact details unlock) and Test 12 (profile registration) in `test_endpoints.py` to verify the end-to-end `whatsapp_number` flow.
 - Implemented Tailor Registration via Phone OTP under task `SCRUM-20`:
   - Created `OTPCode` SQLAlchemy ORM model and schema to track OTP codes, expiration, and verification status.
   - Implemented `POST /api/v1/auth/otp/send` to check phone registration and generate a random 6-digit verification code.

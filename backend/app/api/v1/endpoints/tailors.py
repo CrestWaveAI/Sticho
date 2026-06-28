@@ -182,6 +182,7 @@ async def create_tailor(tailor_in: TailorCreate):
         "address": tailor_in.address,
         "gradient": tailor_in.gradient,
         "contact_number": tailor_in.contact_number,
+        "whatsapp_number": tailor_in.whatsapp_number,
         "location_id": str(tailor_in.location_id) if tailor_in.location_id else None,
         "is_verified": False,
         "rating": 0.0,
@@ -204,7 +205,11 @@ async def create_tailor(tailor_in: TailorCreate):
     row["services"] = []
     row["portfolio_images"] = []
     detail_dict = _row_to_detail(row)
-    return {**detail_dict, "contact_number": row.get("contact_number", "")}
+    return {
+        **detail_dict,
+        "contact_number": row.get("contact_number", ""),
+        "whatsapp_number": row.get("whatsapp_number")
+    }
 
 
 @router.get("/{tailor_id}", response_model=TailorDetailResponse)
@@ -242,7 +247,11 @@ async def update_tailor_profile(tailor_id: uuid.UUID, tailor_update: TailorUpdat
         raise HTTPException(status_code=404, detail="Tailor not found")
     row = result[0]
     detail_dict = _row_to_detail(row)
-    return {**detail_dict, "contact_number": row.get("contact_number", "")}
+    return {
+        **detail_dict,
+        "contact_number": row.get("contact_number", ""),
+        "whatsapp_number": row.get("whatsapp_number")
+    }
 
 
 @router.post("/{tailor_id}/portfolio")

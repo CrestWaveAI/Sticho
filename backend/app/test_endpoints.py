@@ -319,6 +319,7 @@ async def run_tests():
             id=uuid.uuid4(),
             name="Signature Threads",
             contact_number="+91 98765 43210",
+            whatsapp_number="+91 98765 43219",
             email="signature@threads.com",
             bio="Boutique tailor boutique",
             address="12th Main Road, Indiranagar, Bangalore",
@@ -471,8 +472,10 @@ async def run_tests():
         assert tailor_unlocked["id"] == str(test_tailor_id), "Expected correct tailor id"
         assert "contact_number" in tailor_unlocked, "Expected contact_number to be unlocked in response!"
         assert tailor_unlocked["contact_number"] == "+91 98765 43210"
+        assert "whatsapp_number" in tailor_unlocked, "Expected whatsapp_number to be unlocked in response!"
+        assert tailor_unlocked["whatsapp_number"] == "+91 98765 43219"
         print(f"  - Lead submitted successfully.")
-        print(f"  - Gated Contact Number unlocked: {tailor_unlocked['contact_number']}")
+        print(f"  - Gated contact numbers unlocked: Call={tailor_unlocked['contact_number']}, WhatsApp={tailor_unlocked['whatsapp_number']}")
         print("Test 5 Passed!")
 
         # Test 6: PUT /api/v1/tailors/{tailor_id} (Edit profile)
@@ -684,6 +687,7 @@ async def run_tests():
             "bio": "Fine boutique designs.",
             "address": "456, 12th Main, Indiranagar, Bangalore",
             "contact_number": phone_num,
+            "whatsapp_number": "+91 99999 88889",
             "location_id": "6ed6ab9b-68a6-4988-bd3e-a9789e942ea7"
         }
         response = await client.post("/api/v1/tailors", json=verified_payload)
@@ -692,7 +696,8 @@ async def run_tests():
         assert new_tailor["name"] == "Bespoke Boutique"
         assert new_tailor["is_verified"] is False
         assert new_tailor["contact_number"] == phone_num
-        print("  - Tailor profile created successfully with default pending verification status.")
+        assert new_tailor["whatsapp_number"] == "+91 99999 88889"
+        print("  - Tailor profile created successfully with default pending verification status and WhatsApp number.")
         print("Test 12 Passed!")
 
         # Test 13: Multi-Category Search Filtering

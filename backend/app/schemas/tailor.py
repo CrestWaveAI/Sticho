@@ -15,6 +15,7 @@ class TailorBase(BaseModel):
 
 class TailorCreate(TailorBase):
     contact_number: str = Field(..., description="Phone number of the tailor")
+    whatsapp_number: str | None = Field(None, description="WhatsApp number of the tailor boutique")
     location_id: uuid.UUID | None = Field(None, description="Reference to location id")
 
 # Public search results response (gates contact info)
@@ -53,6 +54,7 @@ class TailorDetailResponse(TailorPublicResponse):
 # Private profile response (includes gated contact info - returned ONLY after lead submission)
 class TailorPrivateResponse(TailorDetailResponse):
     contact_number: str = Field(..., description="Phone number of the tailor (unlocked)")
+    whatsapp_number: str | None = Field(None, description="WhatsApp number of the tailor boutique (unlocked)")
 
     class Config:
         from_attributes = True
@@ -64,6 +66,7 @@ class TailorUpdate(BaseModel):
     address: str | None = Field(None, description="Street/location address details")
     gradient: str | None = Field(None, description="CSS gradient background for card display")
     contact_number: str | None = Field(None, description="Phone number of the tailor")
+    whatsapp_number: str | None = Field(None, description="WhatsApp number of the tailor boutique")
     location_id: uuid.UUID | None = Field(None, description="Reference to location id")
     is_verified: bool | None = Field(None, description="Verification status")
     experience: int | None = Field(None, description="Years of experience")

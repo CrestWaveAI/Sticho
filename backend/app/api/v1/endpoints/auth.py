@@ -1,88 +1,134 @@
-import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from app.core.supabase_client import get_supabase
-from app.schemas.auth import OTPSendRequest, OTPVerifyRequest, OTPVerifyResponse
+from app.schemas.auth import TailorRegister, TailorLogin, GoogleAuthRequest, AuthResponse
+from app.core.security import hash_password, verify_password, create_token
 
 router = APIRouter()
 
-@router.post("/otp/send")
-async def send_otp(request: OTPSendRequest):
+@router.post("/register", response_model=AuthResponse)
+async def register_tailor(payload: TailorRegister):
     """
-    Generate and send an OTP code to a phone number.
-    Blocks if the phone number is already registered.
+    Register a new tailor account using email and password.
     """
     sb = get_supabase()
     
-    # 1. Check if phone number is already registered under any tailor
-    tailors = sb.table("tailors").select("id").eq("contact_number", request.phone_number).execute().data
-    if tailors:
-        raise HTTPException(status_code=400, detail="Phone number already registered")
+    # 1. Check if email is already registered
+    existing = sb.table("tailors").select("id").eq("email", payload.email).execute().data
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
         
-    # 2. Generate a random 6-digit OTP code
-    code = f"{random.randint(100000, 999999)}"
-    
-    # 3. Expiration time (5 minutes from now)
-    expires_at = datetime.utcnow() + timedelta(minutes=5)
-    
-    # 4. Save to otp_codes table
-    otp_data = {
-        "id": str(uuid.uuid4()),
-        "phone_number": request.phone_number,
-        "code": code,
-        "expires_at": expires_at.isoformat(),
+    # 2. Hash password and insert tailor
+    hashed = hash_password(payload.password)
+    tailor_id = str(uuid.uuid4())
+    new_tailor = {
+        "id": tailor_id,
+        "name": payload.name,
+        "email": payload.email,
+        "hashed_password": hashed,
+        "contact_number": payload.contact_number,
         "is_verified": False,
+        "verification_status": "pending",
+        "rejection_reason": None,
+        "rating": 0.0,
+        "reviews_count": 0,
         "created_at": datetime.utcnow().isoformat()
     }
     
-    sb.table("otp_codes").insert(otp_data).execute()
-    
-    # Return success response (include OTP in payload for local dev/testing simplicity)
+    result = sb.table("tailors").insert(new_tailor).execute().data
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create tailor account")
+        
+    # 3. Create session token
+    token = create_token({"tailor_id": tailor_id})
     return {
-        "message": "OTP sent successfully",
-        "phone_number": request.phone_number,
-        "otp": code
+        "access_token": token,
+        "token_type": "bearer",
+        "tailor_id": tailor_id
     }
 
-@router.post("/otp/verify", response_model=OTPVerifyResponse)
-async def verify_otp(request: OTPVerifyRequest):
+@router.post("/login", response_model=AuthResponse)
+async def login_tailor(payload: TailorLogin):
     """
-    Verify the OTP code received by a phone number.
+    Login an existing tailor account using email and password.
     """
     sb = get_supabase()
     
-    # Fetch active codes for the phone number
-    results = (
-        sb.table("otp_codes")
-        .select("*")
-        .eq("phone_number", request.phone_number)
-        .eq("code", request.code)
-        .execute()
-        .data
-    )
-    
-    if not results:
-        raise HTTPException(status_code=400, detail="Invalid OTP code")
+    # 1. Fetch tailor by email
+    result = sb.table("tailors").select("id, hashed_password").eq("email", payload.email).execute().data
+    if not result:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
         
-    # Pick the latest matching OTP record
-    record = results[-1]
-    
-    # Check expiration
-    expires_at_str = record.get("expires_at")
-    try:
-        clean_str = expires_at_str.replace("Z", "").split("+")[0]
-        expires_at = datetime.fromisoformat(clean_str)
-    except Exception:
-        expires_at = datetime.utcnow()
+    tailor = result[0]
+    hashed_pwd = tailor.get("hashed_password")
+    if not hashed_pwd:
+        raise HTTPException(status_code=400, detail="Account has no password set. Please use Google OAuth login.")
         
-    if expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="OTP code has expired")
+    # 2. Verify password
+    if not verify_password(payload.password, hashed_pwd):
+        raise HTTPException(status_code=400, detail="Invalid email or password")
         
-    # Mark verified
-    sb.table("otp_codes").update({"is_verified": True}).eq("id", record["id"]).execute()
-    
+    # 3. Create session token
+    token = create_token({"tailor_id": tailor["id"]})
     return {
-        "success": True,
-        "message": "OTP verified successfully"
+        "access_token": token,
+        "token_type": "bearer",
+        "tailor_id": tailor["id"]
+    }
+
+@router.post("/google", response_model=AuthResponse)
+async def google_auth(payload: GoogleAuthRequest):
+    """
+    Register or login a tailor using Google OAuth credentials.
+    """
+    # For local testing simplicity, we accept mock credentials
+    email = payload.email
+    name = payload.name or "Google Tailor"
+    google_id = payload.google_id
+    
+    if not google_id:
+        raise HTTPException(status_code=400, detail="Google ID (google_id) is required")
+    if not email:
+        raise HTTPException(status_code=400, detail="Google account email is required")
+        
+    sb = get_supabase()
+    
+    # 1. Try to find tailor by google_id
+    result = sb.table("tailors").select("id").eq("google_id", google_id).execute().data
+    if result:
+        tailor_id = result[0]["id"]
+    else:
+        # 2. Try to find tailor by email (to link account)
+        result_by_email = sb.table("tailors").select("id, google_id").eq("email", email).execute().data
+        if result_by_email:
+            tailor = result_by_email[0]
+            tailor_id = tailor["id"]
+            # Link Google ID to existing account
+            sb.table("tailors").update({"google_id": google_id}).eq("id", tailor_id).execute()
+        else:
+            # 3. Create new tailor
+            tailor_id = str(uuid.uuid4())
+            new_tailor = {
+                "id": tailor_id,
+                "name": name,
+                "email": email,
+                "google_id": google_id,
+                "is_verified": False,
+                "verification_status": "pending",
+                "rejection_reason": None,
+                "rating": 0.0,
+                "reviews_count": 0,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            create_result = sb.table("tailors").insert(new_tailor).execute().data
+            if not create_result:
+                raise HTTPException(status_code=500, detail="Failed to create tailor via Google OAuth")
+                
+    # 4. Create session token
+    token = create_token({"tailor_id": tailor_id})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "tailor_id": tailor_id
     }

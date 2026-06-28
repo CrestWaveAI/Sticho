@@ -16,7 +16,6 @@ from app.models.tailor import Tailor
 from app.models.service import Service
 from app.models.portfolio import PortfolioImage
 from app.models.lead import Lead
-from app.models.otp import OTPCode
 
 from app.core.db import get_db
 from app.main import app
@@ -236,22 +235,6 @@ class MockQueryBuilder:
             cursor.execute(sql, params)
             columns = [col[0] for col in cursor.description]
             rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            return MockExecuteResult(rows)
-
-        elif self.table_name == "otp_codes":
-            sql = "SELECT * FROM otp_codes"
-            params = []
-            where_clauses = []
-            for field, op, val in self.filters:
-                where_clauses.append(f"{field} {op} ?")
-                params.append(normalize_val(val))
-            if where_clauses:
-                sql += " WHERE " + " AND ".join(where_clauses)
-            cursor.execute(sql, params)
-            columns = [col[0] for col in cursor.description]
-            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            for r in rows:
-                r["is_verified"] = bool(r["is_verified"])
             return MockExecuteResult(rows)
 
         return MockExecuteResult([])
@@ -645,82 +628,96 @@ async def run_tests():
         print("  - Categories listed successfully.")
         print("Test 10 Passed!")
 
-        # Test 11: Tailor Registration via Phone OTP
-        print("\nTest 11: Run Tailor OTP send and verify")
-        # 1. Send OTP (Success)
-        phone_num = "+91 99999 88888"
-        response = await client.post("/api/v1/auth/otp/send", json={"phone_number": phone_num})
+        # Test 11: Tailor Registration (POST /api/v1/auth/register)
+        print("\nTest 11: Run Tailor Registration")
+        # 1. Register new tailor (Success)
+        reg_payload = {
+            "email": "bespoke_register@example.com",
+            "password": "secretpassword",
+            "name": "Bespoke Registered",
+            "contact_number": "+91 99999 88888"
+        }
+        response = await client.post("/api/v1/auth/register", json=reg_payload)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        send_data = response.json()
-        assert send_data["phone_number"] == phone_num
-        assert "otp" in send_data
-        received_otp = send_data["otp"]
-        print("  - OTP code sent successfully.")
+        auth_data = response.json()
+        assert "access_token" in auth_data
+        assert "tailor_id" in auth_data
+        registered_tailor_id = auth_data["tailor_id"]
+        new_tailor = {"id": registered_tailor_id}
+        print("  - Register new tailor account success.")
 
-        # 2. Send OTP (Duplicate Check)
-        response = await client.post("/api/v1/auth/otp/send", json={"phone_number": "+91 98765 43210"})
+        # 2. Register duplicate email (Fail)
+        response = await client.post("/api/v1/auth/register", json=reg_payload)
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
         assert "already registered" in response.json()["detail"]
-        print("  - Duplicate phone check verified.")
-
-        # 3. Verify OTP (Fail - wrong code)
-        response = await client.post("/api/v1/auth/otp/verify", json={"phone_number": phone_num, "code": "000000"})
-        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
-        assert "Invalid OTP code" in response.json()["detail"]
-        print("  - Invalid code verification rejected.")
-
-        # 4. Verify OTP (Success)
-        response = await client.post("/api/v1/auth/otp/verify", json={"phone_number": phone_num, "code": received_otp})
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        assert response.json()["success"] is True
-        print("  - OTP code verified successfully.")
+        print("  - Duplicate email registration blocked.")
         print("Test 11 Passed!")
 
-        # Test 12: Create Tailor Profile (POST /api/v1/tailors)
-        print("\nTest 12: Run Tailor profile creation")
-        # 1. Post Tailor (Fail - unverified phone)
-        unverified_payload = {
-            "name": "Bespoke Boutique",
-            "email": "bespoke@example.com",
-            "bio": "Fine boutique designs.",
-            "address": "456, 12th Main, Indiranagar, Bangalore",
-            "contact_number": "+91 88888 77777",
-            "location_id": "6ed6ab9b-68a6-4988-bd3e-a9789e942ea7"
+        # Test 12: Tailor Login (POST /api/v1/auth/login)
+        print("\nTest 12: Run Tailor Login")
+        # 1. Login with invalid password (Fail)
+        login_payload_wrong = {
+            "email": "bespoke_register@example.com",
+            "password": "wrongpassword"
         }
-        response = await client.post("/api/v1/tailors", json=unverified_payload)
+        response = await client.post("/api/v1/auth/login", json=login_payload_wrong)
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
-        assert "not verified via OTP" in response.json()["detail"]
-        print("  - Profile creation without OTP verification blocked.")
+        assert "Invalid email or password" in response.json()["detail"]
+        print("  - Login with invalid password rejected.")
 
-        # 2. Post Tailor (Success - verified phone)
-        verified_payload = {
-            "name": "Bespoke Boutique",
-            "email": "bespoke@example.com",
-            "bio": "Fine boutique designs.",
-            "address": "456, 12th Main, Indiranagar, Bangalore",
-            "contact_number": phone_num,
-            "whatsapp_number": "+91 99999 88889",
-            "location_id": "6ed6ab9b-68a6-4988-bd3e-a9789e942ea7"
+        # 2. Login with valid credentials (Success)
+        login_payload_correct = {
+            "email": "bespoke_register@example.com",
+            "password": "secretpassword"
         }
-        response = await client.post("/api/v1/tailors", json=verified_payload)
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        new_tailor = response.json()
-        assert new_tailor["name"] == "Bespoke Boutique"
-        assert new_tailor["is_verified"] is False
-        assert new_tailor["contact_number"] == phone_num
-        assert new_tailor["whatsapp_number"] == "+91 99999 88889"
-        print("  - Tailor profile created successfully with default pending verification status and WhatsApp number.")
+        response = await client.post("/api/v1/auth/login", json=login_payload_correct)
+        assert response.status_code == 200, f"Expected 200, got {response.json()}"
+        assert "access_token" in response.json()
+        print("  - Login with valid credentials success.")
         print("Test 12 Passed!")
 
-        # Test 13: Multi-Category Search Filtering
-        print("\nTest 13: Run Multi-Category Search Filtering")
+        # Test 13: Google OAuth (POST /api/v1/auth/google)
+        print("\nTest 13: Run Google OAuth flow")
+        # 1. Google sign-up for new email (Success)
+        google_payload_new = {
+            "email": "google_new@example.com",
+            "name": "Google New Tailor",
+            "google_id": "google-oauth-id-123"
+        }
+        response = await client.post("/api/v1/auth/google", json=google_payload_new)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        google_auth_data = response.json()
+        assert "access_token" in google_auth_data
+        google_tailor_id = google_auth_data["tailor_id"]
+        print("  - Google sign-up for new email success.")
+
+        # 2. Google login for existing google_id (Success)
+        response = await client.post("/api/v1/auth/google", json=google_payload_new)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert response.json()["tailor_id"].replace("-", "") == google_tailor_id.replace("-", "")
+        print("  - Google login for existing google_id success.")
+
+        # 3. Google sign-in for existing email without google_id (Account linking success)
+        google_payload_link = {
+            "email": "bespoke_register@example.com",
+            "name": "Google Link Tailor",
+            "google_id": "google-oauth-id-456"
+        }
+        response = await client.post("/api/v1/auth/google", json=google_payload_link)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert response.json()["tailor_id"].replace("-", "") == registered_tailor_id.replace("-", "")
+        print("  - Google sign-in linked to existing email successfully.")
+        print("Test 13 Passed!")
+
+        # Test 13b: Multi-Category Search Filtering
+        print("\nTest 13b: Run Multi-Category Search Filtering")
         response = await client.get("/api/v1/tailors?category=Alterations&category=NonExistent")
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         search_data = response.json()
         assert len(search_data) >= 1
         assert any(t["name"] == "Signature Boutique" for t in search_data)
         print("  - Multi-category search filter returned matching tailors successfully.")
-        print("Test 13 Passed!")
+        print("Test 13b Passed!")
 
         # Test 14: Get Verification Queue (GET /api/v1/admin/tailors/queue)
         print("\nTest 14: Run Admin Verification Queue retrieval")

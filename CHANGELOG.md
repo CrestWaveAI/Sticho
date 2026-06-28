@@ -25,12 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated mapping functions in `create_tailor` and `update_tailor_profile` in `endpoints/tailors.py` to insert, update, and return the `whatsapp_number` securely.
   - Updated `create_lead` in `endpoints/leads.py` to return the unlocked `whatsapp_number` upon lead submission.
   - Updated test seeds and added assertions to Test 5 (lead contact details unlock) and Test 12 (profile registration) in `test_endpoints.py` to verify the end-to-end `whatsapp_number` flow.
-- Implemented Tailor Registration via Phone OTP under task `SCRUM-20`:
-  - Created `OTPCode` SQLAlchemy ORM model and schema to track OTP codes, expiration, and verification status.
-  - Implemented `POST /api/v1/auth/otp/send` to check phone registration and generate a random 6-digit verification code.
-  - Implemented `POST /api/v1/auth/otp/verify` to validate codes, check expiration, and mark verification status.
+- Redesigned tailor authentication under `SCRUM-20` to support Email + password registration/login and Google OAuth registration/login:
+  - Reverted/dropped mobile OTP verification flow, the `public.otp_codes` table, and old OTP endpoint routes entirely.
+  - Added `hashed_password` and `google_id` columns to `public.tailors` table, set email to NOT NULL and UNIQUE, and made address and contact_number optional.
+  - Built cryptographic hashing and session token utilities, updated schemas, updated Auth and Tailor API endpoints, and replaced OTP tests with email/google integration tests (Tests 11-13, 13b).
 - Implemented Create Tailor Profile under task `SCRUM-21`:
-  - Implemented `POST /api/v1/tailors` to register new tailor profiles, enforcing contact number uniqueness and active OTP verification check gates.
+  - Implemented `POST /api/v1/tailors` to register new tailor profiles, enforcing email uniqueness check gates (and optional phone uniqueness checks) without OTP checks.
 - Implemented List Service Categories under task `SCRUM-12`:
   - Implemented `GET /api/v1/categories` to retrieve service specializations.
   - Updated search tailors endpoint `GET /api/v1/tailors` to support multiple categories via `list[str]` query parameter and perform multi-category search filtering.

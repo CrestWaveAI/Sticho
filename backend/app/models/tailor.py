@@ -13,11 +13,13 @@ class Tailor(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    contact_number: Mapped[str] = mapped_column(String, nullable=False)
+    contact_number: Mapped[str | None] = mapped_column(String, nullable=True)
     whatsapp_number: Mapped[str | None] = mapped_column(String, nullable=True)
-    email: Mapped[str | None] = mapped_column(String, nullable=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
-    address: Mapped[str] = mapped_column(String, nullable=False)
+    address: Mapped[str | None] = mapped_column(String, nullable=True)
+    hashed_password: Mapped[str | None] = mapped_column(String, nullable=True)
+    google_id: Mapped[str | None] = mapped_column(String, nullable=True)
     location_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("public.locations.id", ondelete="SET NULL"), nullable=True
     )

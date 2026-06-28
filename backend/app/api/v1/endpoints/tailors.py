@@ -153,26 +153,20 @@ async def search_tailors(
 async def create_tailor(tailor_in: TailorCreate):
     """
     Register a new tailor profile.
-    Checks that the phone number is not registered and has been verified via OTP.
+    Checks that the email and phone number (if provided) are not registered.
     """
     sb = get_supabase()
     
-    # 1. Check if phone number is already registered under any tailor
-    tailors = sb.table("tailors").select("id").eq("contact_number", tailor_in.contact_number).execute().data
-    if tailors:
-        raise HTTPException(status_code=400, detail="Phone number already registered")
+    # 1. Check if email is already registered
+    existing_email = sb.table("tailors").select("id").eq("email", tailor_in.email).execute().data
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
         
-    # 2. Check if the phone number has been verified via OTP
-    otp_verified = (
-        sb.table("otp_codes")
-        .select("id")
-        .eq("phone_number", tailor_in.contact_number)
-        .eq("is_verified", True)
-        .execute()
-        .data
-    )
-    if not otp_verified:
-        raise HTTPException(status_code=400, detail="Phone number is not verified via OTP")
+    # 2. Check if phone number is already registered under any tailor (if provided)
+    if tailor_in.contact_number:
+        tailors = sb.table("tailors").select("id").eq("contact_number", tailor_in.contact_number).execute().data
+        if tailors:
+            raise HTTPException(status_code=400, detail="Phone number already registered")
         
     # 3. Create the tailor profile (default is_verified = False)
     tailor_id = str(uuid.uuid4())

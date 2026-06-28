@@ -24,6 +24,8 @@ This directory is used to track every change, decision, branch, and feature impl
    * Summary of backend work on approving/rejecting tailors, validation, and mock notification triggering.
 10. **[Resolve Unused Variables warnings](file:///Users/amankumar/Aman/Sticho/docs/BUGFIX-unused-vars-jeelan80.md)**
     * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
+11. **[Tailor Registration & Login (Email + Google OAuth) Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-20-email-auth-amankumar.md)**
+    * Summary of backend work on register, login, Google OAuth endpoints, model properties, and OTP rollback.
 
 
 ---

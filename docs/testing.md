@@ -98,7 +98,7 @@ Test 4 Passed!
 
 Test 5: Submit lead to unlock contact info
   - Lead submitted successfully.
-  - Gated Contact Number unlocked: +91 98765 43210
+  - Gated contact numbers unlocked: Call=+91 98765 43210, WhatsApp=+91 98765 43219
 Test 5 Passed!
 
 Test 6: Update tailor profile details
@@ -139,7 +139,7 @@ Test 11 Passed!
 
 Test 12: Run Tailor profile creation
   - Profile creation without OTP verification blocked.
-  - Tailor profile created successfully with default pending verification status.
+  - Tailor profile created successfully with default pending verification status and WhatsApp number.
 Test 12 Passed!
 
 Test 13: Run Multi-Category Search Filtering

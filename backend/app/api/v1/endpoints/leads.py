@@ -45,4 +45,8 @@ async def create_lead(lead_in: LeadCreate):
     # 3. Return private tailor profile (includes contact_number)
     from app.api.v1.endpoints.tailors import _row_to_detail
     detail_dict = _row_to_detail(tailor_row)
-    return {**detail_dict, "contact_number": tailor_row.get("contact_number", "")}
+    return {
+        **detail_dict,
+        "contact_number": tailor_row.get("contact_number", ""),
+        "whatsapp_number": tailor_row.get("whatsapp_number")
+    }

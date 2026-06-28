@@ -14,6 +14,7 @@ class Tailor(Base):
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     contact_number: Mapped[str] = mapped_column(String, nullable=False)
+    whatsapp_number: Mapped[str | None] = mapped_column(String, nullable=True)
     email: Mapped[str | None] = mapped_column(String, nullable=True)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     address: Mapped[str] = mapped_column(String, nullable=False)

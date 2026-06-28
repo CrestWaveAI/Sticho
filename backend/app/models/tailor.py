@@ -31,6 +31,8 @@ class Tailor(Base):
     latitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
     longitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
     working_hours: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    whatsapp_clicks: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
+    call_clicks: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -47,4 +49,7 @@ class Tailor(Base):
     )
     leads: Mapped[list["Lead"]] = relationship(
         "Lead", back_populates="tailor", cascade="all, delete-orphan"
+    )
+    reviews_list: Mapped[list["Review"]] = relationship(
+        "Review", back_populates="tailor", cascade="all, delete-orphan"
     )

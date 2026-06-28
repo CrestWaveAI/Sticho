@@ -95,6 +95,9 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `add_otp_codes_table` | Adds otp_codes table to public schema for tracking SMS OTP sessions | Up | Low | Applied |
 | `add_tailor_whatsapp_number`| Adds whatsapp_number column to public.tailors table for separate WhatsApp contact | Up | Low | Applied |
 | `revert_otp_verification_auth` | Drops otp_codes table, adds hashed_password and google_id, updates email constraint to UNIQUE NOT NULL | Up | Low | Applied |
+| `create_customers_table` | Adds public.customers table for customer accounts (SCRUM-10) | Up | Low | Applied |
+| `create_reviews_table` | Adds public.reviews table with foreign keys and unique constraints (SCRUM-19) | Up | Low | Applied |
+| `add_tailor_click_tracking`| Adds whatsapp_clicks and call_clicks to public.tailors table (SCRUM-26) | Up | Low | Applied |
 
 ---
 
@@ -121,6 +124,13 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `POST` | `/api/v1/auth/login` | Auth | No | Login an existing tailor account using email and password | Active |
 | `POST` | `/api/v1/auth/google` | Auth | No | Register or login a tailor using Google OAuth credentials | Active |
 | `POST` | `/api/v1/tailors` | Tailors | No | Register a new tailor profile (email uniqueness check, optional phone check) | Active |
+| `POST` | `/api/v1/customer-auth/register` | Customer Auth | No | Register a new customer account using email and password | Active |
+| `POST` | `/api/v1/customer-auth/login` | Customer Auth | No | Login an existing customer account using email and password | Active |
+| `POST` | `/api/v1/customer-auth/google` | Customer Auth | No | Register or login a customer using Google OAuth credentials | Active |
+| `POST` | `/api/v1/reviews` | Reviews | Yes (Customer) | Submit star rating and comment for a tailor boutique | Active |
+| `GET` | `/api/v1/reviews/tailor/{tailor_id}` | Reviews | No | List approved reviews for a tailor | Active |
+| `POST` | `/api/v1/tailors/{tailor_id}/track-click` | Tailors | No | Increment call or whatsapp clicks for a tailor profile | Active |
+| `GET` | `/api/v1/tailors/{tailor_id}/dashboard` | Tailors | Yes (Tailor) | Retrieve dashboard metrics (clicks, completeness, recent leads) | Active |
 
 ---
 
@@ -134,6 +144,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-28:** Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26). Created `Customer` and `Review` ORM models and schemas. Created customer auth endpoints (register, login, Google OAuth). Created reviews endpoints (submit with duplicate reviews blocking, list reviews by tailor, and auto-aggregate tailor ratings). Updated the `Tailor` model/database with `whatsapp_clicks` and `call_clicks` columns, created click tracking endpoints, and built a secure tailor dashboard statistics endpoint. Updated the SQLite mock PostgREST client and test suites, adding Tests 14, 15, and 16.
 * **2026-06-28:** Redesigned tailor authentication under `SCRUM-20` to support Email + password registration/login and Google OAuth registration/login. Dropped OTP codes verification flow and `public.otp_codes` table. Added `hashed_password` and `google_id` columns to `public.tailors` table, set email to NOT NULL and UNIQUE, and made address and contact_number optional. Built cryptographic hashing and session token utilities, updated schemas, updated Auth and Tailor API endpoints, and replaced OTP tests with email/google integration tests (Tests 11-13, 13b).
 * **2026-06-28:** Implemented separate WhatsApp and Call number fields under task `SCRUM-25`. Added `whatsapp_number` to `public.tailors` model, validation schemas (`TailorCreate`, `TailorUpdate`, `TailorPrivateResponse`), API mapper responses (in profile creation, profile updates, and lead submission unlocks), and updated integration tests (Test 5 and Test 12) with verification checks.
 * **2026-06-27:** Implemented tailor registration via phone OTP (`SCRUM-20`), tailor profile creation (`SCRUM-21`), and multi-category filtering (`SCRUM-12`). Created `OTPCode` model/schemas, endpoints for sending/verifying OTP codes, categories listing, and a create tailor profile route gated on OTP verification. Updated the SQLite mock PostgREST client and test seeds, adding Tests 10-13 to the integration test suite.

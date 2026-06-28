@@ -22,6 +22,12 @@ This directory is used to track every change, decision, branch, and feature impl
    * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
 9. **[Tailor Registration & Login (Email + Google OAuth) Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-20-email-auth-amankumar.md)**
    * Summary of backend work on register, login, Google OAuth endpoints, model properties, and OTP rollback.
+10. **[Customer Registration & Login Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-10-customer-auth-sameersam648.md)**
+    * Summary of customer registration, login, Google OAuth, and session token authentication.
+11. **[Ratings & Reviews Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-19-ratings-reviews-sameersam648.md)**
+    * Summary of ratings and reviews model, schemas, gated review submission, duplicate checks, and tailor average recalculation.
+12. **[Tailor Profile Dashboard Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-26-tailor-dashboard-amankumar.md)**
+    * Summary of tailor profile dashboard clicks tracking, completeness calculation, and stats endpoint.
 
 
 ---

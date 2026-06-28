@@ -16,6 +16,8 @@ from app.models.tailor import Tailor
 from app.models.service import Service
 from app.models.portfolio import PortfolioImage
 from app.models.lead import Lead
+from app.models.customer import Customer
+from app.models.review import Review
 
 from app.core.db import get_db
 from app.main import app
@@ -71,6 +73,11 @@ class MockQueryBuilder:
 
     def update(self, data):
         self.update_data = data
+        return self
+
+    def order(self, field, desc=False):
+        self.order_field = field
+        self.order_desc = desc
         return self
 
     def insert(self, data):
@@ -232,6 +239,58 @@ class MockQueryBuilder:
             rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
             return MockExecuteResult(rows)
 
+        elif self.table_name == "customers":
+            sql = "SELECT * FROM customers"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return MockExecuteResult(rows)
+
+        elif self.table_name == "reviews":
+            sql = "SELECT * FROM reviews"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            if getattr(self, "order_field", None):
+                direction = "DESC" if getattr(self, "order_desc", False) else "ASC"
+                sql += f" ORDER BY {self.order_field} {direction}"
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            reviews = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for r in reviews:
+                cursor.execute("SELECT name FROM customers WHERE id = ?", (r["customer_id"],))
+                cust_row = cursor.fetchone()
+                r["customers"] = {"name": cust_row[0]} if cust_row else {"name": "Anonymous"}
+            return MockExecuteResult(reviews)
+
+        elif self.table_name == "leads":
+            sql = "SELECT * FROM leads"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            if getattr(self, "order_field", None):
+                direction = "DESC" if getattr(self, "order_desc", False) else "ASC"
+                sql += f" ORDER BY {self.order_field} {direction}"
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return MockExecuteResult(rows)
+
         return MockExecuteResult([])
 
 class MockSupabaseClient:
@@ -371,6 +430,8 @@ async def run_tests():
         patch("app.api.v1.endpoints.leads.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.categories.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.auth.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.customer_auth.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.reviews.get_supabase", return_value=mock_client),
     ]
     for p in patchers:
         p.start()
@@ -711,6 +772,126 @@ async def run_tests():
         print("  - Multi-category search filter returned matching tailors successfully.")
         print("Test 13b Passed!")
         
+        # Test 14: Customer Registration & Login (SCRUM-10)
+        print("\nTest 14: Run Customer Registration & Login")
+        cust_reg_payload = {
+            "email": "customer_test@example.com",
+            "password": "customerpassword",
+            "name": "John Customer"
+        }
+        # 1. Register customer
+        response = await client.post("/api/v1/customer-auth/register", json=cust_reg_payload)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        cust_auth = response.json()
+        assert "access_token" in cust_auth
+        customer_token = cust_auth["access_token"]
+        customer_id = cust_auth["customer_id"]
+        print("  - Customer registration success.")
+
+        # 2. Duplicate registration check
+        response = await client.post("/api/v1/customer-auth/register", json=cust_reg_payload)
+        assert response.status_code == 400
+        print("  - Customer duplicate registration rejected.")
+
+        # 3. Customer Login
+        response = await client.post("/api/v1/customer-auth/login", json={
+            "email": "customer_test@example.com",
+            "password": "customerpassword"
+        })
+        assert response.status_code == 200
+        assert "access_token" in response.json()
+        print("  - Customer login success.")
+
+        # 4. Customer Google Auth
+        google_payload_cust = {
+            "email": "cust_google@example.com",
+            "name": "Google Customer",
+            "google_id": "google-cust-id-123"
+        }
+        response = await client.post("/api/v1/customer-auth/google", json=google_payload_cust)
+        assert response.status_code == 200
+        assert "customer_id" in response.json()
+        print("  - Customer Google Auth success.")
+        print("Test 14 Passed!")
+
+        # Test 15: View & Submit Ratings and Reviews (SCRUM-19)
+        print("\nTest 15: Run Ratings and Reviews submission & listing")
+        review_payload = {
+            "tailor_id": str(test_tailor_id),
+            "rating": 5,
+            "comment": "Perfect alterations! Highly recommended."
+        }
+        # 1. Submit review (Auth required)
+        response = await client.post(
+            "/api/v1/reviews",
+            json=review_payload,
+            headers={"Authorization": f"Bearer {customer_token}"}
+        )
+        assert response.status_code == 201, f"Expected 201, got {response.status_code}"
+        review_data = response.json()
+        assert review_data["rating"] == 5
+        assert review_data["customer_name"] == "John Customer"
+        print("  - Review submitted successfully.")
+
+        # 2. Duplicate review submission check (Blocked)
+        response = await client.post(
+            "/api/v1/reviews",
+            json=review_payload,
+            headers={"Authorization": f"Bearer {customer_token}"}
+        )
+        assert response.status_code == 400
+        assert "already submitted a review" in response.json()["detail"]
+        print("  - Duplicate review submission blocked.")
+
+        # 3. Retrieve tailor reviews
+        response = await client.get(f"/api/v1/reviews/tailor/{test_tailor_id}")
+        assert response.status_code == 200
+        reviews_list = response.json()
+        assert len(reviews_list) >= 1
+        assert reviews_list[0]["rating"] == 5
+        assert reviews_list[0]["customer_name"] == "John Customer"
+        print("  - Tailor reviews listed successfully.")
+        print("Test 15 Passed!")
+
+        # Test 16: Tailor Dashboard & Click Tracking (SCRUM-26)
+        print("\nTest 16: Run Click Tracking and Tailor Profile Dashboard")
+        # 1. Get tailor login token
+        response = await client.post("/api/v1/auth/login", json={
+            "email": "bespoke_register@example.com",
+            "password": "secretpassword"
+        })
+        assert response.status_code == 200
+        tailor_token = response.json()["access_token"]
+        tailor_id_registered = response.json()["tailor_id"]
+
+        # 2. Track Call & WhatsApp clicks
+        response = await client.post(
+            f"/api/v1/tailors/{tailor_id_registered}/track-click",
+            json={"type": "call"}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            f"/api/v1/tailors/{tailor_id_registered}/track-click",
+            json={"type": "whatsapp"}
+        )
+        assert response.status_code == 200
+        print("  - WhatsApp and Call clicks tracked successfully.")
+
+        # 3. Get Tailor Dashboard
+        response = await client.get(
+            f"/api/v1/tailors/{tailor_id_registered}/dashboard",
+            headers={"Authorization": f"Bearer {tailor_token}"}
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        dashboard = response.json()
+        assert dashboard["call_clicks"] == 1
+        assert dashboard["whatsapp_clicks"] == 1
+        assert "completeness_percentage" in dashboard
+        assert "missing_fields" in dashboard
+        assert "recent_leads" in dashboard
+        print(f"  - Tailor dashboard statistics: Clicks (Call: {dashboard['call_clicks']}, WA: {dashboard['whatsapp_clicks']}), Completeness: {dashboard['completeness_percentage']}%")
+        print("Test 16 Passed!")
+
     for p in patchers:
         p.stop()
     db_conn.close()

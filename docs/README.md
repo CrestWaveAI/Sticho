@@ -14,6 +14,8 @@ This directory is used to track every change, decision, branch, and feature impl
    * Instructions for running backend unit and integration tests and logs of execution results.
 5. **[Frontend Documentation](file:///Users/amankumar/Aman/Sticho/docs/frontend/README.md)**
    * Outlines frontend scroll performance optimizations and autocomplete connection fixes.
+6. **[Jeelan's Profile Creation Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-21-create-tailor-profile-jeelan80.md)**
+   * Summary of Jeelan's work on tailor profile creation, registration flow, onboarding forms, and localStorage sync.
 
 ---
 

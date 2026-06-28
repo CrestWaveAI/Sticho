@@ -1,0 +1,251 @@
+.container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  color: var(--color-ink-muted);
+  font-size: 0.95rem;
+}
+
+.dateFilter .select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  background-color: var(--color-surface);
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Metrics */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metricCard {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metricLabel {
+  font-size: 0.8rem;
+  color: var(--color-ink-muted);
+  font-weight: 500;
+}
+
+.metricValue {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.metricTrend {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.success { color: var(--color-success); }
+.danger { color: var(--color-danger); }
+
+/* Funnel */
+.funnelCard {
+  padding: 1.5rem;
+}
+
+.funnelContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.funnelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.funnelLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.funnelBarWrapper {
+  height: 12px;
+  background-color: var(--color-canvas);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.funnelBar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+.funnelHint {
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Growth Section */
+.growthSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.growthGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.visibilityCard {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.visHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.scoreCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid var(--color-primary-bg);
+  border-top-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-1);
+}
+
+.scoreValue {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.scoreDesc {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+  max-width: 80%;
+}
+
+.improvementList {
+  width: 100%;
+  text-align: left;
+  background-color: var(--color-canvas);
+  padding: 1.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.listTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-ink);
+}
+
+.improvementItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  margin-bottom: 0.5rem;
+}
+
+.check {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.boostCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  border: 2px solid var(--color-accent);
+  background-color: var(--color-accent-bg);
+}
+
+.boostIcon {
+  font-size: 3rem;
+}
+
+.boostContent h3 {
+  margin: 0;
+}
+
+.boostContent p {
+  font-size: 0.9rem;
+  color: var(--color-ink-muted);
+}
+
+.lockedBadge {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.boostBtn {
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+}
+
+@media (max-width: 850px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .growthGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}

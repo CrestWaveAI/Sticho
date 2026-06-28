@@ -1,0 +1,58 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  white-space: nowrap;
+}
+
+.neutral {
+  background-color: var(--color-canvas);
+  color: var(--color-ink-muted);
+  border: 1px solid var(--color-border);
+}
+
+.success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.info {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.accent {
+  background-color: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  color: inherit;
+  margin-left: 0.375rem;
+  margin-right: -0.25rem;
+  font-size: 1.125rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.25rem;
+  opacity: 0.7;
+}
+
+.removeBtn:hover {
+  opacity: 1;
+}

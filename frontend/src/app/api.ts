@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 export interface LocationInfo {
   id: string;
@@ -31,6 +31,9 @@ export interface Tailor {
   categories: string[];
   services?: ServiceDetail[];
   contact_number?: string; // Gated, only unlocked after lead submission
+  latitude?: number | null;
+  longitude?: number | null;
+  whatsapp_number?: string;
 }
 
 export interface LeadPayload {

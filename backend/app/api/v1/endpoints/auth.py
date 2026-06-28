@@ -29,8 +29,6 @@ async def register_tailor(payload: TailorRegister):
         "hashed_password": hashed,
         "contact_number": payload.contact_number,
         "is_verified": False,
-        "verification_status": "pending",
-        "rejection_reason": None,
         "rating": 0.0,
         "reviews_count": 0,
         "created_at": datetime.utcnow().isoformat()
@@ -115,8 +113,6 @@ async def google_auth(payload: GoogleAuthRequest):
                 "email": email,
                 "google_id": google_id,
                 "is_verified": False,
-                "verification_status": "pending",
-                "rejection_reason": None,
                 "rating": 0.0,
                 "reviews_count": 0,
                 "created_at": datetime.utcnow().isoformat()

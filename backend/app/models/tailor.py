@@ -24,8 +24,6 @@ class Tailor(Base):
         UUID(as_uuid=True), ForeignKey("public.locations.id", ondelete="SET NULL"), nullable=True
     )
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    verification_status: Mapped[str] = mapped_column(String, default="pending", nullable=False)
-    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     gradient: Mapped[str | None] = mapped_column(String, nullable=True)
     rating: Mapped[float] = mapped_column(Numeric(2, 1), default=0.0, nullable=False)
     reviews_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

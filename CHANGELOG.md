@@ -10,14 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Implemented Admin Tailor Verification Queue and Status updates under tasks `SCRUM-28` and `SCRUM-29`:
-  - Added `verification_status` and `rejection_reason` columns to `public.tailors` database table on Supabase.
-  - Added `verification_status` and `rejection_reason` fields to SQLAlchemy `Tailor` model.
-  - Updated `TailorBase`, `TailorUpdate`, and `TailorPublicResponse` schemas to support tracking verification lifecycle and storing rejection reasons.
-  - Created admin endpoints module `endpoints/admin.py` implementing `GET /api/v1/admin/tailors/queue` (retrieve pending profiles with sorting) and `POST /api/v1/admin/tailors/{tailor_id}/verify` (approve/reject profiles with reason validation and mock SMS/WhatsApp notifications).
-  - Registered admin endpoints router in `api/v1/router.py`.
-  - Added `MockQueryBuilder.order` to integration testing framework to mock sorting.
-  - Added Tests 14, 15, and 16 to `test_endpoints.py` to cover queue retrieval, profile approval, and profile rejection logic.
+
 - Implemented separate WhatsApp and Call number support under task `SCRUM-25`:
   - Added `whatsapp_number` column to `public.tailors` database table.
   - Added `whatsapp_number` field to SQLAlchemy `Tailor` model.

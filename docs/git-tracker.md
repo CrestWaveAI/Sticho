@@ -7,7 +7,6 @@ This document logs git branches, commit logs, pull requests, and how they map to
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
 | `feature/backend-auth-SCRUM-20` | `develop` | Redesign tailor registration to email + google oauth & revert OTP | Antigravity | Active (Tests Pass) |
-| `feature/backend-verification-queue-SCRUM-28` | `develop` | Implement admin verification queue and approve/reject tailors | Antigravity | Active (Tests Pass) |
 | `feature/frontend-integration-SCRUM-11` | `develop` | Integrate customer search/filtering page, search autocomplete, and lead capture modal | Antigravity | Active (Lint, Build, & Tests Pass) |
 
 

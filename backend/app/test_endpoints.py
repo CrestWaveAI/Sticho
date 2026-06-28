@@ -81,9 +81,7 @@ class MockQueryBuilder:
         self.is_delete = True
         return self
 
-    def order(self, field, desc=False):
-        self.order_by = (field, desc)
-        return self
+
 
     def execute(self):
         cursor = self.db_conn.cursor()
@@ -150,10 +148,7 @@ class MockQueryBuilder:
             if where_clauses:
                 sql += " WHERE " + " AND ".join(where_clauses)
                 
-            if hasattr(self, "order_by") and self.order_by:
-                field, desc = self.order_by
-                direction = "DESC" if desc else "ASC"
-                sql += f" ORDER BY {field} {direction}"
+
                 
             cursor.execute(sql, params)
             columns = [col[0] for col in cursor.description]
@@ -317,7 +312,6 @@ async def run_tests():
             address="12th Main Road, Indiranagar, Bangalore",
             location_id=loc.id,
             is_verified=True,
-            verification_status="approved",
             gradient="linear-gradient(135deg, #bf91ac 0%, #7d4d68 100%)",
             rating=4.8,
             reviews_count=120,
@@ -339,7 +333,6 @@ async def run_tests():
             address="Unverified Address",
             location_id=loc.id,
             is_verified=False,
-            verification_status="pending",
             experience=2,
             latitude=12.9785,
             longitude=77.6409,
@@ -378,7 +371,6 @@ async def run_tests():
         patch("app.api.v1.endpoints.leads.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.categories.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.auth.get_supabase", return_value=mock_client),
-        patch("app.api.v1.endpoints.admin.get_supabase", return_value=mock_client),
     ]
     for p in patchers:
         p.start()
@@ -718,59 +710,6 @@ async def run_tests():
         assert any(t["name"] == "Signature Boutique" for t in search_data)
         print("  - Multi-category search filter returned matching tailors successfully.")
         print("Test 13b Passed!")
-
-        # Test 14: Get Verification Queue (GET /api/v1/admin/tailors/queue)
-        print("\nTest 14: Run Admin Verification Queue retrieval")
-        response = await client.get("/api/v1/admin/tailors/queue")
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        queue_data = response.json()
-        assert len(queue_data) >= 1, f"Expected at least 1 pending tailor, got {len(queue_data)}"
-        for t in queue_data:
-            assert t["verification_status"] == "pending", f"Expected 'pending' status, got {t['verification_status']}"
-            assert t["is_verified"] is False, f"Expected is_verified=False, got {t['is_verified']}"
-        print("  - Admin verification queue returns correct pending profiles.")
-        print("Test 14 Passed!")
-
-        # Test 15: Approve Tailor (POST /api/v1/admin/tailors/{tailor_id}/verify)
-        print("\nTest 15: Run Admin Profile Approval")
-        approve_payload = {"status": "approved"}
-        response = await client.post(
-            f"/api/v1/admin/tailors/{test_unverified_tailor_id}/verify",
-            json=approve_payload
-        )
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        approved_tailor = response.json()
-        assert approved_tailor["verification_status"] == "approved"
-        assert approved_tailor["is_verified"] is True
-        assert approved_tailor["rejection_reason"] is None
-        print("  - Tailor profile approved and marked verified successfully.")
-        print("Test 15 Passed!")
-
-        # Test 16: Reject Tailor (POST /api/v1/admin/tailors/{tailor_id}/verify)
-        print("\nTest 16: Run Admin Profile Rejection")
-        # 1. Reject without reason (Fail)
-        reject_payload_fail = {"status": "rejected"}
-        response = await client.post(
-            f"/api/v1/admin/tailors/{new_tailor['id']}/verify",
-            json=reject_payload_fail
-        )
-        assert response.status_code == 400, f"Expected 400, got {response.status_code}"
-        assert "reason is required" in response.json()["detail"]
-        print("  - Rejection without reason blocked successfully.")
-
-        # 2. Reject with reason (Success)
-        reject_payload_success = {"status": "rejected", "rejection_reason": "Missing clear portfolio pictures."}
-        response = await client.post(
-            f"/api/v1/admin/tailors/{new_tailor['id']}/verify",
-            json=reject_payload_success
-        )
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
-        rejected_tailor = response.json()
-        assert rejected_tailor["verification_status"] == "rejected"
-        assert rejected_tailor["is_verified"] is False
-        assert rejected_tailor["rejection_reason"] == "Missing clear portfolio pictures."
-        print("  - Tailor profile rejected and flagged with rejection reason successfully.")
-        print("Test 16 Passed!")
         
     for p in patchers:
         p.stop()

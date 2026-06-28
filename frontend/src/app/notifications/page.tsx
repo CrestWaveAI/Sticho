@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
-import { StatusChip } from '@/components/ui/StatusChip';
 import { Button } from '@/components/ui/Button';
 import styles from './notifications.module.css';
 

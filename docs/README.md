@@ -16,6 +16,8 @@ This directory is used to track every change, decision, branch, and feature impl
    * Outlines frontend scroll performance optimizations and autocomplete connection fixes.
 6. **[Jeelan's Profile Creation Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-21-create-tailor-profile-jeelan80.md)**
    * Summary of Jeelan's work on tailor profile creation, registration flow, onboarding forms, and localStorage sync.
+7. **[Antigravity's Contact Details Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-25-contact-details-antigravity.md)**
+   * Summary of Antigravity's work on separate WhatsApp & Call number fields, Pydantic schemas, and endpoints mapping.
 
 ---
 

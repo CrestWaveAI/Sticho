@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
           <h2 className={styles.sectionTitle}>Conversion Funnel</h2>
           <Card className={styles.funnelCard}>
             <div className={styles.funnelContainer}>
-              {FUNNEL_DATA.map((step, i) => {
+              {FUNNEL_DATA.map((step) => {
                 const width = (step.count / FUNNEL_DATA[0].count) * 100;
                 return (
                   <div key={step.stage} className={styles.funnelRow}>

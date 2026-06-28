@@ -18,12 +18,10 @@ This directory is used to track every change, decision, branch, and feature impl
    * Summary of Jeelan's work on tailor profile creation, registration flow, onboarding forms, and localStorage sync.
 7. **[Antigravity's Contact Details Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-25-contact-details-antigravity.md)**
    * Summary of Antigravity's work on separate WhatsApp & Call number fields, Pydantic schemas, and endpoints mapping.
-8. **[Admin Verification Queue Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-28-verification-queue-amankumar.md)**
-   * Summary of backend work on tailor verification queue listing, sorting, and model attributes.
-9. **[Admin Profile Approval/Rejection Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-29-approve-reject-profile-amankumar.md)**
-   * Summary of backend work on approving/rejecting tailors, validation, and mock notification triggering.
-10. **[Resolve Unused Variables warnings](file:///Users/amankumar/Aman/Sticho/docs/BUGFIX-unused-vars-jeelan80.md)**
-    * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
+8. **[Resolve Unused Variables warnings](file:///Users/amankumar/Aman/Sticho/docs/BUGFIX-unused-vars-jeelan80.md)**
+   * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
+9. **[Tailor Registration & Login (Email + Google OAuth) Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-20-email-auth-amankumar.md)**
+   * Summary of backend work on register, login, Google OAuth endpoints, model properties, and OTP rollback.
 
 
 ---

@@ -10,14 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Implemented Admin Tailor Verification Queue and Status updates under tasks `SCRUM-28` and `SCRUM-29`:
-  - Added `verification_status` and `rejection_reason` columns to `public.tailors` database table on Supabase.
-  - Added `verification_status` and `rejection_reason` fields to SQLAlchemy `Tailor` model.
-  - Updated `TailorBase`, `TailorUpdate`, and `TailorPublicResponse` schemas to support tracking verification lifecycle and storing rejection reasons.
-  - Created admin endpoints module `endpoints/admin.py` implementing `GET /api/v1/admin/tailors/queue` (retrieve pending profiles with sorting) and `POST /api/v1/admin/tailors/{tailor_id}/verify` (approve/reject profiles with reason validation and mock SMS/WhatsApp notifications).
-  - Registered admin endpoints router in `api/v1/router.py`.
-  - Added `MockQueryBuilder.order` to integration testing framework to mock sorting.
-  - Added Tests 14, 15, and 16 to `test_endpoints.py` to cover queue retrieval, profile approval, and profile rejection logic.
+
 - Implemented separate WhatsApp and Call number support under task `SCRUM-25`:
   - Added `whatsapp_number` column to `public.tailors` database table.
   - Added `whatsapp_number` field to SQLAlchemy `Tailor` model.
@@ -25,12 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated mapping functions in `create_tailor` and `update_tailor_profile` in `endpoints/tailors.py` to insert, update, and return the `whatsapp_number` securely.
   - Updated `create_lead` in `endpoints/leads.py` to return the unlocked `whatsapp_number` upon lead submission.
   - Updated test seeds and added assertions to Test 5 (lead contact details unlock) and Test 12 (profile registration) in `test_endpoints.py` to verify the end-to-end `whatsapp_number` flow.
-- Implemented Tailor Registration via Phone OTP under task `SCRUM-20`:
-  - Created `OTPCode` SQLAlchemy ORM model and schema to track OTP codes, expiration, and verification status.
-  - Implemented `POST /api/v1/auth/otp/send` to check phone registration and generate a random 6-digit verification code.
-  - Implemented `POST /api/v1/auth/otp/verify` to validate codes, check expiration, and mark verification status.
+- Redesigned tailor authentication under `SCRUM-20` to support Email + password registration/login and Google OAuth registration/login:
+  - Reverted/dropped mobile OTP verification flow, the `public.otp_codes` table, and old OTP endpoint routes entirely.
+  - Added `hashed_password` and `google_id` columns to `public.tailors` table, set email to NOT NULL and UNIQUE, and made address and contact_number optional.
+  - Built cryptographic hashing and session token utilities, updated schemas, updated Auth and Tailor API endpoints, and replaced OTP tests with email/google integration tests (Tests 11-13, 13b).
 - Implemented Create Tailor Profile under task `SCRUM-21`:
-  - Implemented `POST /api/v1/tailors` to register new tailor profiles, enforcing contact number uniqueness and active OTP verification check gates.
+  - Implemented `POST /api/v1/tailors` to register new tailor profiles, enforcing email uniqueness check gates (and optional phone uniqueness checks) without OTP checks.
 - Implemented List Service Categories under task `SCRUM-12`:
   - Implemented `GET /api/v1/categories` to retrieve service specializations.
   - Updated search tailors endpoint `GET /api/v1/tailors` to support multiple categories via `list[str]` query parameter and perform multi-category search filtering.

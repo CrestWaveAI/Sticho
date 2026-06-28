@@ -28,6 +28,8 @@ def _row_to_public(row: dict) -> dict:
         "address": row["address"],
         "gradient": row.get("gradient"),
         "is_verified": row.get("is_verified", False),
+        "verification_status": row.get("verification_status", "pending"),
+        "rejection_reason": row.get("rejection_reason"),
         "rating": float(row.get("rating") or 0),
         "reviews_count": row.get("reviews_count", 0),
         "created_at": row.get("created_at") or datetime.utcnow().isoformat(),
@@ -185,6 +187,8 @@ async def create_tailor(tailor_in: TailorCreate):
         "whatsapp_number": tailor_in.whatsapp_number,
         "location_id": str(tailor_in.location_id) if tailor_in.location_id else None,
         "is_verified": False,
+        "verification_status": "pending",
+        "rejection_reason": None,
         "rating": 0.0,
         "reviews_count": 0,
         "created_at": datetime.utcnow().isoformat()

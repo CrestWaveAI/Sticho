@@ -6,8 +6,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | Branch Name | Base Branch | Purpose | Author | Status |
 |---|---|---|---|---|
 | `develop` | `main` | Integration branch | - | Active |
-| `feature/backend-contact-details-SCRUM-25` | `develop` | Implement separate WhatsApp & Call number fields | Antigravity | Active (Tests Pass) |
-| `bugfix/backend-env-setup-SCRUM-40` | `develop` | Add SUPABASE_SECRET_KEY placeholder to .env.example template | Antigravity | PR [#16](https://github.com/CrestWaveAI/Stichoh/pull/16) Opened |
+| `feature/backend-verification-queue-SCRUM-28` | `develop` | Implement admin verification queue and approve/reject tailors | Antigravity | Active (Tests Pass) |
 | `feature/frontend-integration-SCRUM-11` | `develop` | Integrate customer search/filtering page, search autocomplete, and lead capture modal | Antigravity | Active (Lint, Build, & Tests Pass) |
 
 
@@ -16,8 +15,13 @@ This document logs git branches, commit logs, pull requests, and how they map to
 ## 2. Completed / Merged Pull Requests
 | PR # | Source Branch | Target Branch | Approved By | Date Merged | Description / Ticket Key |
 |---|---|---|---|---|---|
+| [#27](https://github.com/CrestWaveAI/Stichoh/pull/27) | `docs/scrum-25-task-doc` | `develop` | User (via MCP merge) | 2026-06-28 | docs: add SCRUM-25 task details and index it |
+| [#26](https://github.com/CrestWaveAI/Stichoh/pull/26) | `docs/index-SCRUM-21-doc` | `develop` | User (via MCP merge) | 2026-06-28 | docs: index SCRUM-21 profile creation doc in README |
+| [#25](https://github.com/CrestWaveAI/Stichoh/pull/25) | `feature/frontend-profile-SCRUM-21` | `develop` | User (via MCP merge) | 2026-06-28 | feat(frontend): implement tailor profile creation (SCRUM-21) |
+| [#23](https://github.com/CrestWaveAI/Stichoh/pull/23) | `feature/backend-contact-details-SCRUM-25` | `develop` | User (via MCP merge) | 2026-06-28 | feat(backend): support separate WhatsApp and call number fields (SCRUM-25) |
 | [#18](https://github.com/CrestWaveAI/Stichoh/pull/18) | `bugfix/frontend-issues-13-14` | `develop` | User (approved via chat) | 2026-06-27 | Resolve scroll jitter and autocomplete loopback (GH-13, GH-14) |
 | [#17](https://github.com/CrestWaveAI/Stichoh/pull/17) | `feature/backend-tailor-otp-registration-SCRUM-20` | `develop` | User (approved via chat) | 2026-06-27 | Implement OTP verification, categories list, and gated profile creation (SCRUM-20, SCRUM-21, SCRUM-12) |
+| [#16](https://github.com/CrestWaveAI/Stichoh/pull/16) | `bugfix/backend-env-setup-SCRUM-40` | `develop` | User (via MCP merge) | 2026-06-26 | fix(backend): add SUPABASE_SECRET_KEY to env template (SCRUM-40) |
 | [#15](https://github.com/CrestWaveAI/Stichoh/pull/15) | `feature/backend-profile-details-SCRUM-15` | `develop` | User (via MCP merge) | 2026-06-25 | Implement detailed tailor profile fields and view page endpoints (SCRUM-15) |
 | [#11](https://github.com/CrestWaveAI/Stichoh/pull/11) | `feature/backend-profile-SCRUM-21` | `develop` | User (approved via chat) | 2026-06-25 | Implemented tailor profile CRUD, services CRUD, and portfolio upload/reordering (SCRUM-21) |
 | [#8](https://github.com/CrestWaveAI/Stichoh/pull/8) | `feature/backend-setup` | `develop` | User (approved via chat) | 2026-06-24 | Bootstrapped FastAPI, Supabase schema migration & seeding, ORM models, and validation schemas setup |

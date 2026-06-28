@@ -58,11 +58,11 @@ Detailed models, columns, and validation schemas implemented:
 
 ### 3. Tailors (`Tailor` model)
 * **Table:** `public.tailors`
-* **Fields:** `id` (UUID, PK), `name` (String), `contact_number` (String), `whatsapp_number` (String, NULL), `email` (String), `bio` (Text), `address` (String), `location_id` (UUID, FK), `is_verified` (Boolean), `gradient` (String), `rating` (Numeric), `reviews_count` (Integer), `experience` (Integer), `latitude` (Numeric), `longitude` (Numeric), `working_hours` (JSONB), `created_at` (DateTime)
+* **Fields:** `id` (UUID, PK), `name` (String), `contact_number` (String), `whatsapp_number` (String, NULL), `email` (String), `bio` (Text), `address` (String), `location_id` (UUID, FK), `is_verified` (Boolean), `verification_status` (String), `rejection_reason` (Text, NULL), `gradient` (String), `rating` (Numeric), `reviews_count` (Integer), `experience` (Integer), `latitude` (Numeric), `longitude` (Numeric), `working_hours` (JSONB), `created_at` (DateTime)
 * **Schemas:** 
   * `TailorCreate` (includes all fields including `whatsapp_number`)
-  * `TailorUpdate` (all fields optional for profile updates including `whatsapp_number`)
-  * `TailorPublicResponse` (excludes `contact_number` and `whatsapp_number`; computes `categories` list from services dynamically)
+  * `TailorUpdate` (all fields optional for profile updates including `whatsapp_number`, `verification_status`, and `rejection_reason`)
+  * `TailorPublicResponse` (excludes `contact_number` and `whatsapp_number`; computes `categories` list from services dynamically; includes `verification_status` and `rejection_reason`)
   * `TailorDetailResponse` (extends public response; includes experience, latitude, longitude, working_hours, and portfolio_images)
   * `TailorPrivateResponse` (includes `contact_number` and `whatsapp_number` unlocked)
 
@@ -96,6 +96,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `add_tailor_profile_fields` | Adds experience, latitude, longitude, and working_hours to tailors, and position to portfolio_images | Up | Low | Applied |
 | `add_otp_codes_table` | Adds otp_codes table to public schema for tracking SMS OTP sessions | Up | Low | Applied |
 | `add_tailor_whatsapp_number`| Adds whatsapp_number column to public.tailors table for separate WhatsApp contact | Up | Low | Applied |
+| `add_tailor_verification_status`| Adds verification_status and rejection_reason columns to public.tailors table for admin verification queue | Up | Low | Applied |
 
 ---
 
@@ -121,6 +122,8 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `POST` | `/api/v1/auth/otp/send` | Auth | No | Send a 6-digit verification code to a phone number | Active |
 | `POST` | `/api/v1/auth/otp/verify` | Auth | No | Verify a phone number using the received OTP code | Active |
 | `POST` | `/api/v1/tailors` | Tailors | No | Register a new tailor profile (requires OTP verification) | Active |
+| `GET` | `/api/v1/admin/tailors/queue` | Admin | No | Retrieve all tailor profiles pending verification (sorted/filtered) | Active |
+| `POST` | `/api/v1/admin/tailors/{tailor_id}/verify` | Admin | No | Approve or reject a tailor profile (requires reason for rejection, mock notification) | Active |
 
 ---
 
@@ -134,6 +137,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-28:** Implemented admin verification queue (`GET /api/v1/admin/tailors/queue`) under `SCRUM-28` and profile approval/rejection (`POST /api/v1/admin/tailors/{tailor_id}/verify`) under `SCRUM-29`. Added `verification_status` and `rejection_reason` columns to `public.tailors` model, updated schemas/mappers, extended MockQueryBuilder for order modifier support, and created Tests 14-16 in the integration test suite.
 * **2026-06-28:** Implemented separate WhatsApp and Call number fields under task `SCRUM-25`. Added `whatsapp_number` to `public.tailors` model, validation schemas (`TailorCreate`, `TailorUpdate`, `TailorPrivateResponse`), API mapper responses (in profile creation, profile updates, and lead submission unlocks), and updated integration tests (Test 5 and Test 12) with verification checks.
 * **2026-06-27:** Implemented tailor registration via phone OTP (`SCRUM-20`), tailor profile creation (`SCRUM-21`), and multi-category filtering (`SCRUM-12`). Created `OTPCode` model/schemas, endpoints for sending/verifying OTP codes, categories listing, and a create tailor profile route gated on OTP verification. Updated the SQLite mock PostgREST client and test seeds, adding Tests 10-13 to the integration test suite.
 * **2026-06-25:** Implemented detailed tailor profile fields and view page endpoints under task `SCRUM-15`. Expanded `tailors` database schema on Supabase with `experience`, `latitude`, `longitude`, `working_hours`, and `portfolio_images.position`. Enforced verification gate on `GET /api/v1/tailors/{tailor_id}`. Updated integration test suite `test_endpoints.py` to verify all updates.

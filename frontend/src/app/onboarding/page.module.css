@@ -193,3 +193,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+.textareaError {
+  border-color: var(--color-error, #ea4335) !important;
+}
+
+.errorText {
+  color: var(--color-error, #ea4335);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}

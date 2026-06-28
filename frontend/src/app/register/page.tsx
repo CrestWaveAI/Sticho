@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/ToastProvider';
+import { sendOtp, verifyOtp } from '../api';
 import styles from './page.module.css';
 
 export default function RegisterPage() {
@@ -18,9 +19,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const { addToast } = useToast();
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = async (e?: React.FormEvent | React.MouseEvent) => {
+    console.log("handleSendOtp triggered!");
+    if (e) e.preventDefault();
+    console.log("Form data submitted:", formData);
+    
     if (!formData.name || !formData.phone || !formData.password) {
+      console.log("Validation failed: missing fields");
       addToast('Please fill in all required fields.', 'error');
       return;
     }
@@ -29,24 +34,45 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    addToast('OTP sent to ' + formData.phone, 'success');
-    setStep(2);
+    try {
+      const res = await sendOtp(formData.phone);
+      addToast(`OTP sent to ${formData.phone}. Use code: ${res.otp}`, 'success');
+      setStep(2);
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : 'Failed to send OTP. Please try again.';
+      addToast(msg, 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.join('').length < 6) {
+  const handleVerify = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
+    const code = otp.join('');
+    if (code.length < 6) {
       addToast('Please enter the 6-digit code.', 'error');
       return;
     }
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    addToast('Account verified successfully!', 'success');
-    router.push('/onboarding');
+    try {
+      await verifyOtp(formData.phone, code);
+      addToast('Account verified successfully!', 'success');
+      
+      localStorage.setItem('tailor_registration_info', JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone
+      }));
+
+      router.push('/onboarding');
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : 'OTP verification failed. Please try again.';
+      addToast(msg, 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -65,18 +91,57 @@ export default function RegisterPage() {
       
       <Card className={styles.authCard}>
         {step === 1 ? (
-          <form onSubmit={handleSendOtp}>
+          <form onSubmit={e => e.preventDefault()}>
             <h1 className={styles.title}>Create your account</h1>
             <p className={styles.subtitle}>Join TailorPartner to manage your tailoring business.</p>
             
             <div className={styles.form}>
-              <Input label="Full Name" placeholder="e.g. Rahul Sharma" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-              <Input label="Business Email" type="email" placeholder="rahul@example.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-              <Input label="Phone Number" type="tel" placeholder="+91 98765 43210" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
-              <Input label="Password" type="password" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
-              <Input label="Confirm Password" type="password" placeholder="••••••••" value={formData.confirm} onChange={e => setFormData({...formData, confirm: e.target.value})} required />
+              <Input 
+                label="Full Name" 
+                placeholder="e.g. Rahul Sharma" 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})} 
+                required 
+              />
+              <Input 
+                label="Business Email" 
+                type="email" 
+                placeholder="rahul@example.com" 
+                value={formData.email} 
+                onChange={e => setFormData({...formData, email: e.target.value})} 
+              />
+              <Input 
+                label="Phone Number" 
+                type="tel" 
+                placeholder="+91 98765 43210" 
+                value={formData.phone} 
+                onChange={e => setFormData({...formData, phone: e.target.value})} 
+                required 
+              />
+              <Input 
+                label="Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={formData.password} 
+                onChange={e => setFormData({...formData, password: e.target.value})} 
+                required 
+              />
+              <Input 
+                label="Confirm Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={formData.confirm} 
+                onChange={e => setFormData({...formData, confirm: e.target.value})} 
+                required 
+              />
               
-              <Button type="submit" fullWidth className={styles.submitBtn} disabled={isLoading}>
+              <Button 
+                type="button" 
+                fullWidth 
+                className={styles.submitBtn} 
+                disabled={isLoading}
+                onClick={handleSendOtp}
+              >
                 {isLoading ? 'Sending...' : 'Send OTP'}
               </Button>
             </div>
@@ -86,7 +151,7 @@ export default function RegisterPage() {
             </p>
           </form>
         ) : (
-          <form onSubmit={handleVerify}>
+          <form onSubmit={e => e.preventDefault()}>
             <h1 className={styles.title}>Verify your number</h1>
             <p className={styles.subtitle}>We&apos;ve sent a 6-digit code to {formData.phone}.</p>
             
@@ -104,7 +169,13 @@ export default function RegisterPage() {
               ))}
             </div>
             
-            <Button type="submit" fullWidth className={styles.submitBtn} disabled={isLoading}>
+            <Button 
+              type="button" 
+              fullWidth 
+              className={styles.submitBtn} 
+              disabled={isLoading}
+              onClick={handleVerify}
+            >
               {isLoading ? 'Verifying...' : 'Verify & Continue'}
             </Button>
             

@@ -8,30 +8,78 @@ import { StatusChip } from '@/components/ui/StatusChip';
 import { Modal } from '@/components/ui/Modal';
 import { MapPicker } from '@/components/ui/MapPicker';
 import { useToast } from '@/components/ui/ToastProvider';
+import { updateTailor, autocompleteLocations } from '../../api';
 import styles from './page.module.css';
 
 export default function ProfilePage() {
-  const [formData, setFormData] = useState({
-    businessName: 'Studio M Tailoring',
-    bio: 'Specializing in custom bridal wear and men\'s bespoke suits with over 15 years of experience.',
-    experience: '15',
-    specialty: 'Bridal & Men\'s Bespoke',
-    whatsapp: '9876543210',
-    callNumber: '9876543210',
-    address: '123 Fashion Street, Near MG Road',
-    city: 'Mumbai',
-    locality: 'Bandra West',
-    latitude: 12.9716 as number | null,
-    longitude: 77.5946 as number | null,
+  const [formData, setFormData] = useState(() => {
+    const defaults = {
+      businessName: 'Studio M Tailoring',
+      bio: 'Specializing in custom bridal wear and men\'s bespoke suits with over 15 years of experience.',
+      experience: '15',
+      specialty: 'Bridal & Men\'s Bespoke',
+      whatsapp: '9876543210',
+      callNumber: '9876543210',
+      address: '123 Fashion Street, Near MG Road',
+      city: 'Mumbai',
+      locality: 'Bandra West',
+      latitude: 12.9716 as number | null,
+      longitude: 77.5946 as number | null,
+    };
+    if (typeof window !== 'undefined') {
+      const localData = localStorage.getItem('tailor_profile');
+      if (localData) {
+        try {
+          const parsed = JSON.parse(localData);
+          return {
+            businessName: parsed.businessName || defaults.businessName,
+            bio: parsed.bio || defaults.bio,
+            experience: parsed.experience || defaults.experience,
+            whatsapp: parsed.whatsapp || defaults.whatsapp,
+            callNumber: parsed.callNumber || defaults.callNumber,
+            address: parsed.address || defaults.address,
+            city: parsed.city || defaults.city,
+            locality: parsed.locality || defaults.locality,
+            latitude: parsed.latitude !== undefined ? parsed.latitude : defaults.latitude,
+            longitude: parsed.longitude !== undefined ? parsed.longitude : defaults.longitude,
+            specialty: parsed.specialty || defaults.specialty,
+          };
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return defaults;
   });
 
-  const [categories, setCategories] = useState(['Bridal Wear', 'Men\'s Tailoring', 'Custom Orders', 'Alterations']);
+  const [categories, setCategories] = useState<string[]>(() => {
+    const defaultCats = ['Bridal Wear', 'Men\'s Tailoring', 'Custom Orders', 'Alterations'];
+    if (typeof window !== 'undefined') {
+      const localData = localStorage.getItem('tailor_profile');
+      if (localData) {
+        try {
+          const parsed = JSON.parse(localData);
+          if (parsed.categories) return parsed.categories;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return defaultCats;
+  });
+
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Today at 10:42 AM');
   
   // Validation errors
+  const [businessNameError, setBusinessNameError] = useState('');
+  const [bioError, setBioError] = useState('');
+  const [addressError, setAddressError] = useState('');
+  const [cityError, setCityError] = useState('');
+  const [localityError, setLocalityError] = useState('');
+  const [experienceError, setExperienceError] = useState('');
   const [whatsappError, setWhatsappError] = useState('');
   const [callNumberError, setCallNumberError] = useState('');
 
@@ -52,10 +100,47 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
+    // Reset errors
+    setBusinessNameError('');
+    setBioError('');
+    setAddressError('');
+    setCityError('');
+    setLocalityError('');
+    setExperienceError('');
     setWhatsappError('');
     setCallNumberError('');
     
     let hasError = false;
+
+    if (!formData.businessName.trim()) {
+      setBusinessNameError('Business Name is required.');
+      hasError = true;
+    }
+    if (!formData.bio.trim()) {
+      setBioError('Business Bio is required.');
+      hasError = true;
+    }
+    if (!formData.address.trim()) {
+      setAddressError('Full Address is required.');
+      hasError = true;
+    }
+    if (!formData.city.trim()) {
+      setCityError('City is required.');
+      hasError = true;
+    }
+    if (!formData.locality.trim()) {
+      setLocalityError('Locality is required.');
+      hasError = true;
+    }
+
+    const expNum = parseInt(formData.experience);
+    if (!formData.experience.trim()) {
+      setExperienceError('Years of Experience is required.');
+      hasError = true;
+    } else if (isNaN(expNum) || expNum < 0) {
+      setExperienceError('Please enter a valid number of years.');
+      hasError = true;
+    }
 
     if (!validatePhone(formData.whatsapp)) {
       setWhatsappError('Please enter a valid WhatsApp number (e.g. +91 98765 43210 or 9876543210).');
@@ -78,10 +163,64 @@ export default function ProfilePage() {
     }
 
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSaving(false);
-    setLastUpdated('Just now');
-    addToast('Profile changes saved successfully!', 'success');
+    try {
+      const tailorId = localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b'; // Fallback to Indiranagar dummy tailor if none exists
+
+      // 1. Resolve location ID
+      let matchedLocationId: string | null = null;
+      try {
+        const suggestions = await autocompleteLocations(formData.locality.trim());
+        const match = suggestions.find(
+          loc => loc.city.toLowerCase() === formData.city.trim().toLowerCase() &&
+                 loc.name.toLowerCase() === formData.locality.trim().toLowerCase()
+        );
+        if (match) {
+          matchedLocationId = match.id;
+        } else if (suggestions.length > 0) {
+          matchedLocationId = suggestions[0].id;
+        }
+      } catch (err) {
+        console.error('Error fetching location autocomplete:', err);
+      }
+
+      // 2. Call backend PUT to update database
+      await updateTailor(tailorId, {
+        name: formData.businessName.trim(),
+        bio: formData.bio.trim(),
+        address: formData.address.trim(),
+        contact_number: formData.callNumber.trim(),
+        location_id: matchedLocationId,
+        experience: expNum,
+        latitude: formData.latitude,
+        longitude: formData.longitude
+      });
+
+      // 3. Update localStorage copy
+      const localProfile = {
+        id: tailorId,
+        businessName: formData.businessName.trim(),
+        bio: formData.bio.trim(),
+        experience: formData.experience.trim(),
+        whatsapp: formData.whatsapp.trim(),
+        callNumber: formData.callNumber.trim(),
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        locality: formData.locality.trim(),
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        categories
+      };
+      
+      localStorage.setItem('tailor_profile', JSON.stringify(localProfile));
+
+      setLastUpdated('Just now');
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : 'Failed to save profile changes. Please try again.';
+      addToast(msg, 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -91,14 +230,41 @@ export default function ProfilePage() {
       addToast('Category already exists', 'error');
       return;
     }
-    setCategories([...categories, newCategory]);
+    const updatedCategories = [...categories, newCategory];
+    setCategories(updatedCategories);
+    
+    // Sync updated categories to localStorage
+    const localData = localStorage.getItem('tailor_profile');
+    if (localData) {
+      try {
+        const parsed = JSON.parse(localData);
+        parsed.categories = updatedCategories;
+        localStorage.setItem('tailor_profile', JSON.stringify(parsed));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     setNewCategory('');
     setIsCategoryModalOpen(false);
     addToast('Category added', 'success');
   };
 
   const removeCategory = (catToRemove: string) => {
-    setCategories(categories.filter(cat => cat !== catToRemove));
+    const updatedCategories = categories.filter(cat => cat !== catToRemove);
+    setCategories(updatedCategories);
+
+    // Sync updated categories to localStorage
+    const localData = localStorage.getItem('tailor_profile');
+    if (localData) {
+      try {
+        const parsed = JSON.parse(localData);
+        parsed.categories = updatedCategories;
+        localStorage.setItem('tailor_profile', JSON.stringify(parsed));
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,20 +292,41 @@ export default function ProfilePage() {
         <div className={styles.mainCol}>
           <Card className={styles.sectionCard}>
             <h2 className={styles.sectionTitle}>Business Details</h2>
-            <Input label="Business Name" value={formData.businessName} onChange={e => setFormData({...formData, businessName: e.target.value})} />
+            <Input 
+              label="Business Name" 
+              value={formData.businessName} 
+              onChange={e => {
+                setFormData({...formData, businessName: e.target.value});
+                if (businessNameError) setBusinessNameError('');
+              }} 
+              error={businessNameError}
+            />
             
             <div className={styles.wrapper}>
               <label className={styles.label}>Business Bio</label>
               <textarea 
-                className={styles.textarea} 
+                className={`${styles.textarea} ${bioError ? styles.textareaError : ''}`} 
                 value={formData.bio}
-                onChange={e => setFormData({...formData, bio: e.target.value})}
+                onChange={e => {
+                  setFormData({...formData, bio: e.target.value});
+                  if (bioError) setBioError('');
+                }}
                 rows={4}
               />
+              {bioError && <span className={styles.errorText}>{bioError}</span>}
             </div>
 
             <div className={styles.rowGrid}>
-              <Input label="Years of Experience" type="number" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} />
+              <Input 
+                label="Years of Experience" 
+                type="number" 
+                value={formData.experience} 
+                onChange={e => {
+                  setFormData({...formData, experience: e.target.value});
+                  if (experienceError) setExperienceError('');
+                }} 
+                error={experienceError}
+              />
               <Input label="Specialty" value={formData.specialty} onChange={e => setFormData({...formData, specialty: e.target.value})} />
             </div>
           </Card>
@@ -167,10 +354,35 @@ export default function ProfilePage() {
               />
             </div>
             
-            <Input label="Full Address" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+            <Input 
+              label="Full Address" 
+              value={formData.address} 
+              onChange={e => {
+                setFormData({...formData, address: e.target.value});
+                if (addressError) setAddressError('');
+              }} 
+              error={addressError}
+            />
+            
             <div className={styles.rowGrid}>
-              <Input label="City" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-              <Input label="Locality" value={formData.locality} onChange={e => setFormData({...formData, locality: e.target.value})} />
+              <Input 
+                label="City" 
+                value={formData.city} 
+                onChange={e => {
+                  setFormData({...formData, city: e.target.value});
+                  if (cityError) setCityError('');
+                }} 
+                error={cityError}
+              />
+              <Input 
+                label="Locality" 
+                value={formData.locality} 
+                onChange={e => {
+                  setFormData({...formData, locality: e.target.value});
+                  if (localityError) setLocalityError('');
+                }} 
+                error={localityError}
+              />
             </div>
 
             <div className={styles.wrapper} style={{ marginTop: '1rem' }}>

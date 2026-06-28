@@ -34,6 +34,7 @@ export interface Tailor {
   latitude?: number | null;
   longitude?: number | null;
   whatsapp_number?: string;
+  experience?: number;
 }
 
 export interface LeadPayload {
@@ -83,4 +84,84 @@ export async function submitLead(payload: LeadPayload): Promise<Tailor> {
   });
   if (!res.ok) throw new Error("Failed to submit lead registration");
   return res.json(); // Returns unlocked tailor detail with contact_number
+}
+
+export async function sendOtp(phoneNumber: string): Promise<{ message: string; phone_number: string; otp: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/otp/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phone_number: phoneNumber }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to send OTP");
+  }
+  return res.json();
+}
+
+export async function verifyOtp(phoneNumber: string, code: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/otp/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phone_number: phoneNumber, code }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Invalid OTP code");
+  }
+  return res.json();
+}
+
+export async function createTailor(payload: {
+  name: string;
+  email?: string;
+  bio?: string;
+  address: string;
+  gradient?: string;
+  contact_number: string;
+  location_id?: string | null;
+}): Promise<Tailor> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to create tailor profile");
+  }
+  return res.json();
+}
+
+export async function updateTailor(id: string, payload: {
+  name?: string;
+  email?: string;
+  bio?: string;
+  address?: string;
+  gradient?: string;
+  contact_number?: string;
+  location_id?: string | null;
+  experience?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  is_verified?: boolean;
+}): Promise<Tailor> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update tailor profile");
+  }
+  return res.json();
 }

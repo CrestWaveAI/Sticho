@@ -255,6 +255,7 @@ export default function Home() {
           <a href="#" className="nav-link active">Explore Tailors</a>
           <a href="#" className="nav-link">Bookings</a>
           <a href="#" className="nav-link">How it Works</a>
+          <Link href="/register" className="nav-link">Join as Partner</Link>
           <Link href="/dashboard" className="nav-btn">Tailor Portal</Link>
         </nav>
       </header>

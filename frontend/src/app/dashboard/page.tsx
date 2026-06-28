@@ -1,18 +1,46 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
 import styles from './page.module.css';
 import { ArrowUpRight, ArrowDownRight, Eye, Phone, MessageSquare, TrendingUp } from 'lucide-react';
 
 export default function DashboardOverview() {
+  const [businessName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const profile = localStorage.getItem('tailor_profile');
+      if (profile) {
+        try {
+          const parsed = JSON.parse(profile);
+          return parsed.businessName || 'Studio M';
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+    return 'Studio M';
+  });
+
+  const [status] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('tailor_profile_status') || 'approved';
+    }
+    return 'approved';
+  });
+
   return (
     <div>
       <div className={styles.header}>
         <div>
-          <h1>Welcome back, Studio M</h1>
+          <h1>Welcome back, {businessName}</h1>
           <p className={styles.subtitle}>Here&apos;s how your tailoring business is doing today.</p>
         </div>
-        <StatusChip label="Profile Approved" status="success" />
+        {status === 'pending' ? (
+          <StatusChip label="Pending Approval" status="warning" />
+        ) : (
+          <StatusChip label="Profile Approved" status="success" />
+        )}
       </div>
 
       <div className={styles.kpiGrid}>

@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { StatusChip } from '@/components/ui/StatusChip';
-import { Modal } from '@/components/ui/Modal';
 import { MapPicker } from '@/components/ui/MapPicker';
 import { useToast } from '@/components/ui/ToastProvider';
-import { updateTailor, autocompleteLocations } from '../../api';
+import { updateTailor, autocompleteLocations, fetchCategories, fetchTailorDetail, createService, deleteService, Category, ServiceDetail } from '../../api';
 import styles from './page.module.css';
 
 export default function ProfilePage() {
@@ -52,24 +51,69 @@ export default function ProfilePage() {
     return defaults;
   });
 
-  const [categories, setCategories] = useState<string[]>(() => {
-    const defaultCats = ['Bridal Wear', 'Men\'s Tailoring', 'Custom Orders', 'Alterations'];
-    if (typeof window !== 'undefined') {
-      const localData = localStorage.getItem('tailor_profile');
-      if (localData) {
-        try {
-          const parsed = JSON.parse(localData);
-          if (parsed.categories) return parsed.categories;
-        } catch (e) {
-          console.error(e);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+  const [originalServices, setOriginalServices] = useState<ServiceDetail[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      const id = localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
+      try {
+        // Fetch all categories from backend
+        const cats = await fetchCategories();
+        if (cats && cats.length > 0) {
+          setDbCategories(cats);
+        } else {
+          setDbCategories([
+            { id: '5607f519-33a9-4346-b10f-40326245bc8b', name: "Men's" },
+            { id: '1ea1e215-ca20-4e6c-815b-10de20789f51', name: "Women's" },
+            { id: 'a575e192-c79b-47fa-87b3-4c58b2c6bf44', name: "Boutique" },
+            { id: '01b205ff-8de0-4219-b5e7-7adcb94020df', name: "Alterations" },
+            { id: 'fd0a02a6-7e8c-47b8-8fd9-005a0bd7b627', name: "Uniforms" }
+          ]);
         }
+
+        // Fetch tailor details
+        const tailor = await fetchTailorDetail(id);
+        if (tailor) {
+          if (tailor.services) {
+            setOriginalServices(tailor.services);
+            const serviceCats = tailor.services
+              .map(s => s.category?.name)
+              .filter(Boolean) as string[];
+            setCategories(serviceCats);
+          }
+          setFormData(prev => ({
+            ...prev,
+            businessName: tailor.name || prev.businessName,
+            bio: tailor.bio || prev.bio,
+            address: tailor.address || prev.address,
+            experience: tailor.experience !== undefined ? String(tailor.experience) : prev.experience,
+            latitude: tailor.latitude !== undefined ? tailor.latitude : prev.latitude,
+            longitude: tailor.longitude !== undefined ? tailor.longitude : prev.longitude,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load profile data from backend:", err);
       }
     }
-    return defaultCats;
-  });
+    loadData();
+  }, []);
 
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
+  const toggleCategory = (cat: string) => {
+    setCategories(prev => {
+      const isSelected = prev.includes(cat);
+      if (isSelected) {
+        if (prev.length === 1) {
+          addToast('At least one category is required.', 'error');
+          return prev;
+        }
+        return prev.filter(c => c !== cat);
+      } else {
+        return [...prev, cat];
+      }
+    });
+  };
   const [isSaving, setIsSaving] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('Today at 10:42 AM');
   
@@ -157,6 +201,11 @@ export default function ProfilePage() {
       hasError = true;
     }
 
+    if (categories.length === 0) {
+      addToast('At least one category is required.', 'error');
+      return;
+    }
+
     if (hasError) {
       addToast('Please correct the validation errors in the form.', 'error');
       return;
@@ -195,6 +244,47 @@ export default function ProfilePage() {
         longitude: formData.longitude
       });
 
+      // 2b. Sync categories (services) with the backend
+      const originalCatNames = originalServices.map(s => s.category?.name).filter(Boolean) as string[];
+      const catsToAdd = categories.filter(cat => !originalCatNames.includes(cat));
+      const servicesToDelete = originalServices.filter(s => s.category && !categories.includes(s.category.name));
+
+      for (const catName of catsToAdd) {
+        const catObj = dbCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+        if (catObj) {
+          try {
+            await createService({
+              tailor_id: tailorId,
+              category_id: catObj.id
+            });
+          } catch (err) {
+            console.error(`Failed to create service for category ${catName}:`, err);
+          }
+        }
+      }
+
+      for (const service of servicesToDelete) {
+        try {
+          await deleteService(service.id);
+        } catch (err) {
+          console.error(`Failed to delete service ${service.id}:`, err);
+        }
+      }
+
+      // Refetch tailor details to refresh originalServices and categories from DB
+      try {
+        const freshTailor = await fetchTailorDetail(tailorId);
+        if (freshTailor && freshTailor.services) {
+          setOriginalServices(freshTailor.services);
+          const serviceCats = freshTailor.services
+            .map(s => s.category?.name)
+            .filter(Boolean) as string[];
+          setCategories(serviceCats);
+        }
+      } catch (refetchErr) {
+        console.error("Failed to refetch profile details after sync:", refetchErr);
+      }
+
       // 3. Update localStorage copy
       const localProfile = {
         id: tailorId,
@@ -220,50 +310,6 @@ export default function ProfilePage() {
       addToast(msg, 'error');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleAddCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategory.trim()) return;
-    if (categories.includes(newCategory)) {
-      addToast('Category already exists', 'error');
-      return;
-    }
-    const updatedCategories = [...categories, newCategory];
-    setCategories(updatedCategories);
-    
-    // Sync updated categories to localStorage
-    const localData = localStorage.getItem('tailor_profile');
-    if (localData) {
-      try {
-        const parsed = JSON.parse(localData);
-        parsed.categories = updatedCategories;
-        localStorage.setItem('tailor_profile', JSON.stringify(parsed));
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    setNewCategory('');
-    setIsCategoryModalOpen(false);
-    addToast('Category added', 'success');
-  };
-
-  const removeCategory = (catToRemove: string) => {
-    const updatedCategories = categories.filter(cat => cat !== catToRemove);
-    setCategories(updatedCategories);
-
-    // Sync updated categories to localStorage
-    const localData = localStorage.getItem('tailor_profile');
-    if (localData) {
-      try {
-        const parsed = JSON.parse(localData);
-        parsed.categories = updatedCategories;
-        localStorage.setItem('tailor_profile', JSON.stringify(parsed));
-      } catch (err) {
-        console.error(err);
-      }
     }
   };
 
@@ -399,12 +445,23 @@ export default function ProfilePage() {
         <div className={styles.sideCol}>
           <Card className={styles.sectionCard}>
             <h2 className={styles.sectionTitle}>Categories</h2>
-            <div className={styles.chipGroup}>
-              {categories.map(cat => (
-                <StatusChip key={cat} label={cat} status="neutral" onRemove={() => removeCategory(cat)} />
-              ))}
+            <div className={styles.chipGroup} style={{ gap: '0.5rem', display: 'flex', flexWrap: 'wrap' }}>
+              {dbCategories.map(cat => {
+                const isSelected = categories.includes(cat.name);
+                return (
+                  <span 
+                    key={cat.id} 
+                    onClick={() => toggleCategory(cat.name)} 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <StatusChip 
+                      label={cat.name} 
+                      status={isSelected ? 'accent' : 'neutral'} 
+                    />
+                  </span>
+                );
+              })}
             </div>
-            <Button variant="secondary" fullWidth className={styles.addCategoryBtn} onClick={() => setIsCategoryModalOpen(true)}>+ Add Category</Button>
           </Card>
 
           <Card className={styles.sectionCard}>
@@ -421,19 +478,6 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
-
-      <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Add Category">
-        <form onSubmit={handleAddCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <Input 
-            label="Category Name" 
-            placeholder="e.g. Ethnic Wear" 
-            value={newCategory} 
-            onChange={e => setNewCategory(e.target.value)} 
-            required 
-          />
-          <Button type="submit" fullWidth>Add Category</Button>
-        </form>
-      </Modal>
     </div>
   );
 }

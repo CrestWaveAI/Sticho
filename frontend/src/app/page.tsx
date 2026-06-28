@@ -7,22 +7,36 @@ import {
   fetchTailors, 
   autocompleteLocations, 
   submitLead, 
+  fetchCategories,
   Tailor, 
-  LocationInfo 
+  LocationInfo
 } from "./api";
-
-const ACTIVE_CATEGORIES = [
-  "Men's",
-  "Women's",
-  "Boutique",
-  "Alterations",
-  "Uniforms",
-] as const;
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoriesList, setCategoriesList] = useState<string[]>([
+    "Men's",
+    "Women's",
+    "Boutique",
+    "Alterations",
+    "Uniforms"
+  ]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const cats = await fetchCategories();
+        if (cats && cats.length > 0) {
+          setCategoriesList(cats.map(c => c.name));
+        }
+      } catch (e) {
+        console.error("Failed to load categories for filtering:", e);
+      }
+    }
+    loadCategories();
+  }, []);
   const [tailorsList, setTailorsList] = useState<Tailor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending] = useTransition();
@@ -355,7 +369,7 @@ export default function Home() {
             )}
           </div>
           <div className="filter-group">
-            {ACTIVE_CATEGORIES.map((category) => {
+            {categoriesList.map((category) => {
               const isChecked = selectedCategories.includes(category);
               return (
                 <label 

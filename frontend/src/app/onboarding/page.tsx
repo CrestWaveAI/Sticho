@@ -8,13 +8,45 @@ import { Button } from '@/components/ui/Button';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { MapPicker } from '@/components/ui/MapPicker';
 import { useToast } from '@/components/ui/ToastProvider';
-import { createTailor, updateTailor, autocompleteLocations } from '../api';
+import { createTailor, updateTailor, autocompleteLocations, fetchCategories, createService, Category } from '../api';
 import { Upload } from 'lucide-react';
 import styles from './page.module.css';
+import { useEffect } from 'react';
 
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState(['Stitching', 'Bridal Wear']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Alterations']);
+  const [dbCategories, setDbCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const cats = await fetchCategories();
+        if (cats && cats.length > 0) {
+          setDbCategories(cats);
+        } else {
+          setDbCategories([
+            { id: '5607f519-33a9-4346-b10f-40326245bc8b', name: "Men's" },
+            { id: '1ea1e215-ca20-4e6c-815b-10de20789f51', name: "Women's" },
+            { id: 'a575e192-c79b-47fa-87b3-4c58b2c6bf44', name: "Boutique" },
+            { id: '01b205ff-8de0-4219-b5e7-7adcb94020df', name: "Alterations" },
+            { id: 'fd0a02a6-7e8c-47b8-8fd9-005a0bd7b627', name: "Uniforms" }
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories, using defaults:", err);
+        setDbCategories([
+          { id: '5607f519-33a9-4346-b10f-40326245bc8b', name: "Men's" },
+          { id: '1ea1e215-ca20-4e6c-815b-10de20789f51', name: "Women's" },
+          { id: 'a575e192-c79b-47fa-87b3-4c58b2c6bf44', name: "Boutique" },
+          { id: '01b205ff-8de0-4219-b5e7-7adcb94020df', name: "Alterations" },
+          { id: 'fd0a02a6-7e8c-47b8-8fd9-005a0bd7b627', name: "Uniforms" }
+        ]);
+      }
+    }
+    loadCategories();
+  }, []);
+
   const [logoUploaded, setLogoUploaded] = useState(false);
   const [photosUploaded, setPhotosUploaded] = useState(false);
   
@@ -92,7 +124,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { addToast } = useToast();
 
-  const allCategories = ['Stitching', 'Alterations', 'Bridal Wear', 'Men\'s Tailoring', 'Custom Orders'];
+  const allCategories = dbCategories.map(c => c.name);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories(prev => 
@@ -170,6 +202,11 @@ export default function OnboardingPage() {
       hasError = true;
     }
 
+    if (selectedCategories.length === 0) {
+      addToast('At least one category is required to submit your profile.', 'error');
+      return;
+    }
+
     if (hasError) {
       addToast('Please correct the validation errors in the form.', 'error');
       return;
@@ -213,6 +250,21 @@ export default function OnboardingPage() {
         latitude,
         longitude
       });
+
+      // 3b. Create services in the database for each selected category
+      for (const catName of selectedCategories) {
+        const catObj = dbCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+        if (catObj) {
+          try {
+            await createService({
+              tailor_id: createdTailor.id,
+              category_id: catObj.id
+            });
+          } catch (serviceErr) {
+            console.error(`Failed to create service for category ${catName}:`, serviceErr);
+          }
+        }
+      }
 
       // 4. Save to local storage for persistence and dashboard
       const localProfile = {

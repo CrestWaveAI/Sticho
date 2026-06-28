@@ -146,6 +146,21 @@ Test 13: Run Multi-Category Search Filtering
   - Multi-category search filter returned matching tailors successfully.
 Test 13 Passed!
 
+Test 14: Run Admin Verification Queue retrieval
+  - Admin verification queue returns correct pending profiles.
+Test 14 Passed!
+
+Test 15: Run Admin Profile Approval
+[MOCK NOTIFICATION] Sent verification outcome alert to tailor 'Unverified Tailor' (+91 98765 43211): Status is 'approved'.
+  - Tailor profile approved and marked verified successfully.
+Test 15 Passed!
+
+Test 16: Run Admin Profile Rejection
+  - Rejection without reason blocked successfully.
+[MOCK NOTIFICATION] Sent verification outcome alert to tailor 'Bespoke Boutique' (+91 99999 88888): Status is 'rejected'. Reason: Missing clear portfolio pictures.
+  - Tailor profile rejected and flagged with rejection reason successfully.
+Test 16 Passed!
+
 All integration tests passed successfully against local SQLite database!
 ```
 
@@ -164,8 +179,20 @@ npm run lint
 ```text
 > temp_next_app@0.1.0 lint
 > eslint
+
+
+/Users/amankumar/Aman/Sticho/frontend/src/app/analytics/page.tsx
+  59:39  warning  'i' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/amankumar/Aman/Sticho/frontend/src/app/notifications/page.tsx
+  4:10  warning  'StatusChip' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/amankumar/Aman/Sticho/frontend/src/app/reviews/page.tsx
+  4:10  warning  'StatusChip' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
 ```
-*(Clean execution with zero errors and zero warnings)*
+*(Passed lint verification with zero errors and 3 warnings. Warnings are documented and tracked via GitHub issue #22 for the frontend team to address)*
 
 ### Executing Frontend Production Build
 Run the following command from the `frontend/` root directory:

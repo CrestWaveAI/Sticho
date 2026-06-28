@@ -12,6 +12,8 @@ class TailorBase(BaseModel):
     address: str = Field(..., description="Street/location address details")
     gradient: str | None = Field(None, description="CSS gradient background for card display")
     is_verified: bool = Field(False, description="Verification status")
+    verification_status: str = Field("pending", description="Verification status (pending/approved/rejected)")
+    rejection_reason: str | None = Field(None, description="Reason for profile rejection")
 
 class TailorCreate(TailorBase):
     contact_number: str = Field(..., description="Phone number of the tailor")
@@ -69,6 +71,8 @@ class TailorUpdate(BaseModel):
     whatsapp_number: str | None = Field(None, description="WhatsApp number of the tailor boutique")
     location_id: uuid.UUID | None = Field(None, description="Reference to location id")
     is_verified: bool | None = Field(None, description="Verification status")
+    verification_status: str | None = Field(None, description="Verification status (pending/approved/rejected)")
+    rejection_reason: str | None = Field(None, description="Reason for profile rejection")
     experience: int | None = Field(None, description="Years of experience")
     latitude: float | None = Field(None, description="Latitude coordinate")
     longitude: float | None = Field(None, description="Longitude coordinate")

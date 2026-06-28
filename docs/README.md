@@ -22,7 +22,7 @@ This directory is used to track every change, decision, branch, and feature impl
    * Summary of backend work on tailor verification queue listing, sorting, and model attributes.
 9. **[Admin Profile Approval/Rejection Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-29-approve-reject-profile-amankumar.md)**
    * Summary of backend work on approving/rejecting tailors, validation, and mock notification triggering.
-10. **[Resolve Unused Variables warnings](file:///h:/Projects/Stichoh/docs/BUGFIX-unused-vars-jeelan80.md)**
+10. **[Resolve Unused Variables warnings](file:///Users/amankumar/Aman/Sticho/docs/BUGFIX-unused-vars-jeelan80.md)**
     * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
 
 

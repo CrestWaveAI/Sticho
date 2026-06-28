@@ -165,3 +165,50 @@ export async function updateTailor(id: string, payload: {
   }
   return res.json();
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/categories`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to fetch categories");
+  }
+  return res.json();
+}
+
+export async function createService(payload: {
+  tailor_id: string;
+  category_id: string;
+  price_estimate?: number;
+  time_estimate_days?: number;
+  description?: string;
+}): Promise<unknown> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/services`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to create service");
+  }
+  return res.json();
+}
+
+export async function deleteService(serviceId: string): Promise<unknown> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/services/${serviceId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to delete service");
+  }
+  return res.json();
+}

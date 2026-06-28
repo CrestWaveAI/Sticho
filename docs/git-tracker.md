@@ -15,7 +15,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 ## 2. Completed / Merged Pull Requests
 | PR # | Source Branch | Target Branch | Approved By | Date Merged | Description / Ticket Key |
 |---|---|---|---|---|---|
-| [#35](https://github.com/CrestWaveAI/Stichoh/pull/35) | `feature/backend-auth-SCRUM-20` | `develop` | - | Pending | Redesign tailor registration to email + google oauth & revert OTP (SCRUM-20) |
+| [#35](https://github.com/CrestWaveAI/Stichoh/pull/35) | `feature/backend-auth-SCRUM-20` | `develop` | User (via MCP merge) | 2026-06-28 | Redesign tailor registration to email + google oauth & revert OTP (SCRUM-20) |
 | [#27](https://github.com/CrestWaveAI/Stichoh/pull/27) | `docs/scrum-25-task-doc` | `develop` | User (via MCP merge) | 2026-06-28 | docs: add SCRUM-25 task details and index it |
 | [#26](https://github.com/CrestWaveAI/Stichoh/pull/26) | `docs/index-SCRUM-21-doc` | `develop` | User (via MCP merge) | 2026-06-28 | docs: index SCRUM-21 profile creation doc in README |
 | [#25](https://github.com/CrestWaveAI/Stichoh/pull/25) | `feature/frontend-profile-SCRUM-21` | `develop` | User (via MCP merge) | 2026-06-28 | feat(frontend): implement tailor profile creation (SCRUM-21) |

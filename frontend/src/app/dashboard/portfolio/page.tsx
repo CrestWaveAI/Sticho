@@ -22,8 +22,8 @@ export default function PortfolioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [caption, setCaption] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,51 +56,59 @@ export default function PortfolioPage() {
 
   // Handle file selection and validation
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // 1. Check limit before selecting file
-    if (images.length >= 20) {
-      addToast('Maximum limit of 20 portfolio images reached.', 'error');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    // 2. Validate Type (JPEG, PNG, WEBP)
+    const newFiles: File[] = [];
+    const newUrls: string[] = [];
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      addToast('Unsupported file type. Only JPEG, PNG, and WEBP are allowed.', 'error');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    // 3. Validate Size (max 5MB)
     const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      addToast('File size exceeds the 5MB limit.', 'error');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // 1. Check limit
+      if (images.length + selectedFiles.length + newFiles.length >= 20) {
+        addToast('Maximum limit of 20 portfolio images reached. Skipping remaining files.', 'error');
+        break;
+      }
+
+      // 2. Validate Type (JPEG, PNG, WEBP)
+      if (!allowedTypes.includes(file.type)) {
+        addToast(`Unsupported file type for "${file.name}". Only JPEG, PNG, and WEBP are allowed.`, 'error');
+        continue;
+      }
+
+      // 3. Validate Size (max 5MB)
+      if (file.size > maxSize) {
+        addToast(`File size for "${file.name}" exceeds the 5MB limit.`, 'error');
+        continue;
+      }
+
+      newFiles.push(file);
+      newUrls.push(URL.createObjectURL(file));
     }
 
-    setSelectedFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    if (newFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      setPreviewUrls(prev => [...prev, ...newUrls]);
+    }
+    
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Clean up object URL to prevent memory leaks
+  // Clean up object URLs to prevent memory leaks
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [previewUrl]);
+  }, [previewUrls]);
 
-  // Handle upload submit
+  // Handle upload submit (sequential batch uploads)
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
-      addToast('Please select an image file to upload.', 'error');
+    if (selectedFiles.length === 0) {
+      addToast('Please select at least one image file to upload.', 'error');
       return;
     }
 
@@ -110,24 +118,41 @@ export default function PortfolioPage() {
     }
 
     setIsUploading(true);
+    let successCount = 0;
+    const currentImages = [...images];
+
     try {
-      const uploadedImage = await uploadPortfolioImage(tailorProfileId, selectedFile, caption.trim() || undefined);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        if (currentImages.length >= 20) {
+          addToast('Upload stopped: Limit of 20 images reached.', 'error');
+          break;
+        }
+        
+        // Single common caption or dynamic label index
+        const fileCaption = selectedFiles.length > 1 
+          ? (caption.trim() ? `${caption.trim()} (${i + 1})` : undefined)
+          : (caption.trim() || undefined);
+
+        const uploadedImage = await uploadPortfolioImage(tailorProfileId, file, fileCaption);
+        currentImages.push(uploadedImage);
+        successCount++;
+      }
       
-      // Append and sort
-      const newImages = [...images, uploadedImage].sort((a, b) => a.position - b.position);
-      setImages(newImages);
+      // Sort and update
+      const sortedImages = currentImages.sort((a, b) => a.position - b.position);
+      setImages(sortedImages);
       
       // Reset state
       setIsAddOpen(false);
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setCaption('');
-      setPreviewUrl(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setPreviewUrls([]);
       
-      addToast('Portfolio image uploaded successfully!', 'success');
+      addToast(`Successfully uploaded ${successCount} image${successCount !== 1 ? 's' : ''}!`, 'success');
     } catch (e) {
       console.error(e);
-      const errMsg = e instanceof Error ? e.message : 'Failed to upload portfolio image.';
+      const errMsg = e instanceof Error ? e.message : 'Failed to upload portfolio images.';
       addToast(errMsg, 'error');
     } finally {
       setIsUploading(false);
@@ -290,8 +315,8 @@ export default function PortfolioPage() {
         isOpen={isAddOpen} 
         onClose={() => {
           setIsAddOpen(false);
-          setSelectedFile(null);
-          setPreviewUrl(null);
+          setSelectedFiles([]);
+          setPreviewUrls([]);
           setCaption('');
         }} 
         title="Upload Portfolio Image"
@@ -303,19 +328,26 @@ export default function PortfolioPage() {
               ref={fileInputRef}
               onChange={handleFileChange}
               accept="image/jpeg, image/png, image/webp"
+              multiple
               style={{ display: 'none' }}
             />
-            {previewUrl ? (
-              <div className={styles.previewContainer}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrl} alt="Upload preview" className={styles.previewImg} />
-                <div className={styles.changeLabel}>Change Image</div>
+            {previewUrls.length > 0 ? (
+              <div className={styles.previewGrid}>
+                {previewUrls.map((url, idx) => (
+                  <div key={idx} className={styles.previewItem}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Upload preview ${idx}`} className={styles.previewImg} />
+                  </div>
+                ))}
+                <div className={styles.changeLabel}>
+                  {previewUrls.length} file{previewUrls.length !== 1 ? 's' : ''} selected. Click to add/change.
+                </div>
               </div>
             ) : (
               <div className={styles.uploadPrompt}>
                 <Upload size={32} className={styles.uploadIcon} />
-                <span className={styles.uploadTitle}>Choose file or drag here</span>
-                <span className={styles.uploadFormats}>Supported: JPEG, PNG, WEBP (Max 5MB)</span>
+                <span className={styles.uploadTitle}>Choose files or drag here</span>
+                <span className={styles.uploadFormats}>Supported: JPEG, PNG, WEBP (Max 5MB per file)</span>
               </div>
             )}
           </div>
@@ -333,15 +365,15 @@ export default function PortfolioPage() {
               variant="secondary" 
               onClick={() => {
                 setIsAddOpen(false);
-                setSelectedFile(null);
-                setPreviewUrl(null);
+                setSelectedFiles([]);
+                setPreviewUrls([]);
                 setCaption('');
               }}
               disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={!selectedFile || isUploading}>
+            <Button type="submit" variant="primary" disabled={selectedFiles.length === 0 || isUploading}>
               {isUploading ? 'Uploading...' : 'Upload Work'}
             </Button>
           </div>

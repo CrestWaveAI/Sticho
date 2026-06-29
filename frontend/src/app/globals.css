@@ -20,6 +20,16 @@
   --accent: #f472b6;
   --success: #10b981;
   --star-color: #f59e0b;
+
+  /* UI Component variables mapping */
+  --color-surface: #101014;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-ink: #ffffff;
+  --color-ink-muted: #9ca3af;
+  --color-canvas: #070708;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --shadow-3: 0 20px 45px rgba(0, 0, 0, 0.65);
 }
 
 * {

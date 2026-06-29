@@ -47,3 +47,8 @@ mcp_config.json
 # Agents / Customizations
 .agents
 .agen
+
+# Skills tool generated files
+.junie/
+agent/
+skills-lock.json

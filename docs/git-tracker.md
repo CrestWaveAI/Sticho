@@ -9,6 +9,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | `feature/backend-auth-SCRUM-20` | `develop` | Redesign tailor registration to email + google oauth & revert OTP | Antigravity | Active (Tests Pass) |
 | `feature/frontend-integration-SCRUM-11` | `develop` | Integrate customer search/filtering page, search autocomplete, and lead capture modal | Antigravity | Active (Lint, Build, & Tests Pass) |
 | `feature/backend-customer-auth-reviews-dashboard-SCRUM-10-19-26` | `develop` | Implement customer registration & login, ratings/reviews, and tailor dashboard | Antigravity | Active (Tests Pass) |
+| `feature/frontend-portfolio-upload-SCRUM-22` | `develop` | Upload portfolio images with dynamic dashboard UI, constraints, and backend Cloudinary CDN support | Jeelan / Antigravity | Active (Lint, Build, & Tests Pass) |
 
 
 ---

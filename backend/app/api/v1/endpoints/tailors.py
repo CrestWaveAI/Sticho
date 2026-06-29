@@ -13,6 +13,22 @@ from app.core.supabase_client import get_supabase
 from app.schemas.tailor import TailorPublicResponse, TailorDetailResponse, TailorPrivateResponse, TailorUpdate, TailorCreate
 from app.schemas.portfolio import PortfolioImagePositionUpdate
 
+import cloudinary
+import cloudinary.uploader
+
+# Configure Cloudinary if credentials are provided in the environment
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True
+    )
+
 router = APIRouter()
 
 
@@ -307,15 +323,32 @@ async def upload_portfolio_image(
     if len(images) >= 20:
         raise HTTPException(status_code=400, detail="Maximum limit of 20 portfolio images reached.")
 
-    # 5. Save locally as fallback (mimicking CDN in local development)
-    filename = f"{uuid.uuid4()}_{file.filename}"
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-    absolute_path = os.path.join(base_dir, "static", "media", filename)
-    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
-    with open(absolute_path, "wb") as f:
-        f.write(contents)
-    
-    image_url = f"/static/media/{filename}"
+    # 5. Save to Cloudinary CDN (or local fallback)
+    if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+        try:
+            upload_result = cloudinary.uploader.upload(
+                contents,
+                folder=f"tailors/{tailor_id}/portfolio",
+                public_id=f"img_{uuid.uuid4().hex}"
+            )
+            image_url = upload_result.get("secure_url")
+            if not image_url:
+                raise Exception("Missing secure_url in Cloudinary response")
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Cloudinary upload failed: {str(e)}"
+            )
+    else:
+        # Fallback local file system handler (mimicking CDN/Cloudinary locally)
+        filename = f"{uuid.uuid4()}_{file.filename}"
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        absolute_path = os.path.join(base_dir, "static", "media", filename)
+        os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
+        with open(absolute_path, "wb") as f:
+            f.write(contents)
+        
+        image_url = f"/static/media/{filename}"
 
     new_img = {
         "id": str(uuid.uuid4()),

@@ -69,3 +69,35 @@ def verify_token(token: str) -> dict | None:
         return payload
     except Exception:
         return None
+
+from fastapi import Header, HTTPException, status
+
+def get_current_tailor_id(authorization: str | None = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header",
+        )
+    token = authorization.split(" ")[1]
+    payload = verify_token(token)
+    if not payload or "tailor_id" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+    return payload["tailor_id"]
+
+def get_current_customer_id(authorization: str | None = Header(None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header",
+        )
+    token = authorization.split(" ")[1]
+    payload = verify_token(token)
+    if not payload or "customer_id" not in payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+    return payload["customer_id"]

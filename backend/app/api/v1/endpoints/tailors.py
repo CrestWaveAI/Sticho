@@ -5,7 +5,7 @@ direct asyncpg connection, which avoids pooler auth issues.
 import uuid
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends
 from pydantic import BaseModel
 from typing import Any
 
@@ -368,3 +368,99 @@ async def delete_portfolio_image(tailor_id: uuid.UUID, image_id: uuid.UUID):
     # 2. Delete from database
     sb.table("portfolio_images").delete().eq("id", str(image_id)).eq("tailor_id", str(tailor_id)).execute()
     return {"message": "Portfolio image deleted successfully."}
+
+from app.core.security import get_current_tailor_id
+from pydantic import Field
+
+class ClickTrackingRequest(BaseModel):
+    type: str = Field(..., description="Click type: 'whatsapp' or 'call'")
+
+@router.post("/{tailor_id}/track-click")
+async def track_click(tailor_id: uuid.UUID, payload: ClickTrackingRequest):
+    """
+    Increment Call or WhatsApp click count for a tailor boutique.
+    """
+    sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    
+    # 1. Fetch current clicks
+    tailor_data = sb.table("tailors").select("whatsapp_clicks, call_clicks").eq("id", tailor_id_str).execute().data
+    if not tailor_data:
+        raise HTTPException(status_code=404, detail="Tailor not found")
+        
+    tailor = tailor_data[0]
+    
+    # 2. Update clicks based on type
+    if payload.type == "whatsapp":
+        new_val = tailor.get("whatsapp_clicks", 0) + 1
+        sb.table("tailors").update({"whatsapp_clicks": new_val}).eq("id", tailor_id_str).execute()
+    elif payload.type == "call":
+        new_val = tailor.get("call_clicks", 0) + 1
+        sb.table("tailors").update({"call_clicks": new_val}).eq("id", tailor_id_str).execute()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid click type. Must be 'whatsapp' or 'call'")
+        
+    return {"message": "Click tracked successfully."}
+
+@router.get("/{tailor_id}/dashboard")
+async def get_tailor_dashboard(
+    tailor_id: uuid.UUID,
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
+    """
+    Retrieve statistics, clicks, profile completeness, and recent leads for a tailor.
+    """
+    sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to view this dashboard"
+        )
+        
+    # 1. Fetch tailor details
+    tailor_data = sb.table("tailors").select("*").eq("id", tailor_id_str).execute().data
+    if not tailor_data:
+        raise HTTPException(status_code=404, detail="Tailor not found")
+        
+    tailor = tailor_data[0]
+    
+    # 2. Fetch leads count & recent leads
+    leads = sb.table("leads").select("*").eq("tailor_id", tailor_id_str).order("created_at", desc=True).execute().data or []
+    lead_count = len(leads)
+    recent_leads = leads[:5]
+    
+    # 3. Calculate profile completeness ratio
+    # Name (10%), Email (10%), Bio (20%), Address (20%), Contact (10%), WhatsApp (10%), Location (10%), Experience (10%)
+    fields = [
+        ("name", 10),
+        ("email", 10),
+        ("bio", 20),
+        ("address", 20),
+        ("contact_number", 10),
+        ("whatsapp_number", 10),
+        ("location_id", 10),
+        ("experience", 10)
+    ]
+    completeness = 0
+    missing_fields = []
+    
+    for f, weight in fields:
+        val = tailor.get(f)
+        if val is not None and str(val).strip() != "":
+            completeness += weight
+        else:
+            missing_fields.append(f)
+            
+    approval_status = "approved" if tailor.get("is_verified") else "pending"
+    
+    return {
+        "approval_status": approval_status,
+        "lead_count": lead_count,
+        "whatsapp_clicks": tailor.get("whatsapp_clicks", 0),
+        "call_clicks": tailor.get("call_clicks", 0),
+        "completeness_percentage": completeness,
+        "missing_fields": missing_fields,
+        "recent_leads": recent_leads
+    }

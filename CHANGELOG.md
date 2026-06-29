@@ -10,7 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
+- Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26):
+  - Created `public.customers` and `public.reviews` database tables on Supabase.
+  - Added `Customer` and `Review` SQLAlchemy ORM models, and added `whatsapp_clicks`, `call_clicks` columns, and review relationships to `Tailor` model.
+  - Added customer registration (`/customer-auth/register`), customer login (`/customer-auth/login`), and Google OAuth (`/customer-auth/google`) endpoints.
+  - Added gated review submission (`POST /api/v1/reviews`), review listing (`GET /api/v1/reviews/tailor/{tailor_id}`), and auto-calculation of average tailor rating.
+  - Added call/WhatsApp click tracking endpoint (`POST /api/v1/tailors/{tailor_id}/track-click`) and secure tailor profile dashboard analytics endpoint (`GET /api/v1/tailors/{tailor_id}/dashboard`).
+  - Added Tests 14, 15, and 16 to the integration test suite.
 - Implemented separate WhatsApp and Call number support under task `SCRUM-25`:
   - Added `whatsapp_number` column to `public.tailors` database table.
   - Added `whatsapp_number` field to SQLAlchemy `Tailor` model.

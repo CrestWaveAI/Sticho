@@ -26,6 +26,7 @@ List of packages added via `uv add`:
 | `aiofiles` | Asynchronous file operations (needed for StaticFiles) | 2026-06-24 | Profile/Portfolio CRUD |
 | `python-multipart` | Parser for multipart form-data (needed for File uploads) | 2026-06-24 | Profile/Portfolio CRUD |
 | `supabase` | Python client for Supabase REST (PostgREST) API | 2026-06-25 | SCRUM-11 / DB Connection |
+| `cloudinary` | Cloudinary Python SDK for image/video upload and transformation CDN integration | 2026-06-29 | SCRUM-22 |
 
 ---
 
@@ -40,6 +41,9 @@ Track variables that must be added to `.env` to prevent broken local setups:
 | `SUPABASE_URL` | Supabase Project API URL | 2026-06-23 | Yes |
 | `SUPABASE_KEY` | Supabase anon key | 2026-06-23 | Yes |
 | `SUPABASE_SECRET_KEY`| Supabase service_role key to bypass RLS | 2026-06-25 | Yes |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary Account Cloud Name | 2026-06-29 | Yes (Production) |
+| `CLOUDINARY_API_KEY` | Cloudinary API Key credential | 2026-06-29 | Yes (Production) |
+| `CLOUDINARY_API_SECRET` | Cloudinary API Secret credential | 2026-06-29 | Yes (Production) |
 
 ---
 
@@ -144,6 +148,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-29:** Configured Cloudinary CDN for portfolio image uploads under task `SCRUM-22`. Added `cloudinary` dependency, configured `.env` and `.env.example` placeholder variables, and refactored the backend endpoint `POST /api/v1/tailors/{tailor_id}/portfolio/upload` to upload incoming assets directly to Cloudinary. Implemented local filesystem fallback for offline/test environments to ensure all integration tests continue passing.
 * **2026-06-28:** Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26). Created `Customer` and `Review` ORM models and schemas. Created customer auth endpoints (register, login, Google OAuth). Created reviews endpoints (submit with duplicate reviews blocking, list reviews by tailor, and auto-aggregate tailor ratings). Updated the `Tailor` model/database with `whatsapp_clicks` and `call_clicks` columns, created click tracking endpoints, and built a secure tailor dashboard statistics endpoint. Updated the SQLite mock PostgREST client and test suites, adding Tests 14, 15, and 16.
 * **2026-06-28:** Redesigned tailor authentication under `SCRUM-20` to support Email + password registration/login and Google OAuth registration/login. Dropped OTP codes verification flow and `public.otp_codes` table. Added `hashed_password` and `google_id` columns to `public.tailors` table, set email to NOT NULL and UNIQUE, and made address and contact_number optional. Built cryptographic hashing and session token utilities, updated schemas, updated Auth and Tailor API endpoints, and replaced OTP tests with email/google integration tests (Tests 11-13, 13b).
 * **2026-06-28:** Implemented separate WhatsApp and Call number fields under task `SCRUM-25`. Added `whatsapp_number` to `public.tailors` model, validation schemas (`TailorCreate`, `TailorUpdate`, `TailorPrivateResponse`), API mapper responses (in profile creation, profile updates, and lead submission unlocks), and updated integration tests (Test 5 and Test 12) with verification checks.

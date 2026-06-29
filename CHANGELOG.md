@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Configured Cloudinary CDN for portfolio image uploads under task `SCRUM-22`:
+  - Added `cloudinary` dependency in `pyproject.toml`.
+  - Added `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` to environment files.
+  - Updated `POST /api/v1/tailors/{tailor_id}/portfolio/upload` to upload images directly to Cloudinary and return secure URLs, falling back to local storage if credentials are not configured.
 - Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26):
   - Created `public.customers` and `public.reviews` database tables on Supabase.
   - Added `Customer` and `Review` SQLAlchemy ORM models, and added `whatsapp_clicks`, `call_clicks` columns, and review relationships to `Tailor` model.

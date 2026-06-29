@@ -19,6 +19,15 @@ export interface ServiceDetail {
   };
 }
 
+export interface PortfolioImage {
+  id: string;
+  tailor_id: string;
+  image_url: string;
+  caption: string | null;
+  position: number;
+  created_at: string;
+}
+
 export interface Tailor {
   id: string;
   name: string;
@@ -30,6 +39,7 @@ export interface Tailor {
   location: LocationInfo;
   categories: string[];
   services?: ServiceDetail[];
+  portfolio_images?: PortfolioImage[];
   contact_number?: string; // Gated, only unlocked after lead submission
   latitude?: number | null;
   longitude?: number | null;
@@ -209,6 +219,60 @@ export async function deleteService(serviceId: string): Promise<unknown> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to delete service");
+  }
+  return res.json();
+}
+
+export async function uploadPortfolioImage(
+  tailorId: string,
+  file: File,
+  caption?: string
+): Promise<PortfolioImage> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (caption) {
+    formData.append("caption", caption);
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${tailorId}/portfolio/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to upload portfolio image");
+  }
+  return res.json();
+}
+
+export async function deletePortfolioImage(
+  tailorId: string,
+  imageId: string
+): Promise<unknown> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${tailorId}/portfolio/${imageId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to delete portfolio image");
+  }
+  return res.json();
+}
+
+export async function reorderPortfolioImages(
+  tailorId: string,
+  positions: { id: string; position: number }[]
+): Promise<unknown> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${tailorId}/portfolio/reorder`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(positions),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to save portfolio positions");
   }
   return res.json();
 }

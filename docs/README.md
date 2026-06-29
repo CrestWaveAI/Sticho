@@ -22,6 +22,12 @@ This directory is used to track every change, decision, branch, and feature impl
    * Summary of cleaning up unused variables and imports in analytics, notifications, and reviews.
 9. **[Tailor Registration & Login (Email + Google OAuth) Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-20-email-auth-amankumar.md)**
    * Summary of backend work on register, login, Google OAuth endpoints, model properties, and OTP rollback.
+10. **[Universal Search Autocomplete Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-13-search-autocomplete-jeelan80.md)**
+    * Summary of universal search autocomplete supporting shops, locations, and categories with keyboard support and glassmorphism.
+11. **[Save / Shortlist Tailors Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-14-save-shortlist-jeelan80.md)**
+    * Summary of client-side shortlist storage and toggleable visual dashboard widgets.
+12. **[Upload Portfolio Images Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-22-upload-portfolio-jeelan80.md)**
+    * Summary of dynamic portfolio dashboard uploads, size/type constraints, deletions, and position reordering.
 
 
 ---

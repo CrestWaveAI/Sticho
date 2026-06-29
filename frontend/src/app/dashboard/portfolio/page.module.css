@@ -2,20 +2,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .header h1 {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-ink);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-heading);
   margin: 0;
+}
+
+.subheader {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0 0;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.5rem;
 }
 
@@ -24,18 +32,111 @@
   flex-direction: column;
   overflow: hidden;
   height: 100%;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.imagePlaceholder {
+.portfolioItem:hover {
+  transform: translateY(-2px);
+  border-color: rgba(191, 145, 172, 0.3);
+}
+
+.imageWrapper {
   width: 100%;
   height: 200px;
-  background-color: var(--color-canvas);
+  position: relative;
+  background-color: #0b0b0d;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.portfolioImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.portfolioItem:hover .portfolioImage {
+  transform: scale(1.03);
+}
+
+.cardOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.75rem;
+  z-index: 2;
+}
+
+.portfolioItem:hover .cardOverlay {
+  opacity: 1;
+}
+
+.reorderPanel {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.reorderBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(15, 15, 18, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-heading);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-ink-muted);
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reorderBtn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.reorderBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.9);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background: #dc2626;
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
 }
 
 .content {
@@ -46,36 +147,166 @@
   flex: 1;
 }
 
-.title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--color-ink);
-  font-size: 1.125rem;
-  margin: 0;
-}
-
-.description {
+.caption {
   font-size: 0.875rem;
-  color: var(--color-ink-muted);
-  line-height: 1.5;
+  color: var(--text-heading);
+  line-height: 1.4;
   margin: 0;
-}
-
-.meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  padding-top: 0.5rem;
-}
-
-.price {
   font-weight: 500;
-  color: var(--color-ink);
+}
+
+.noCaption {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.positionBadge {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 600;
+  background: var(--primary-light);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: auto;
+  border: 1px solid rgba(191, 145, 172, 0.2);
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(191, 145, 172, 0.1);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .emptyState {
   text-align: center;
-  padding: 3rem;
-  color: var(--color-ink-muted);
+  padding: 5rem 2rem;
+  background: var(--card-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1.25rem;
+  opacity: 0.6;
+}
+
+.emptyState h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyState p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+  max-width: 320px;
+}
+
+.uploadForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fileUploadArea {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fileUploadArea:hover {
+  border-color: var(--primary);
+  background: rgba(191, 145, 172, 0.03);
+}
+
+.uploadPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uploadIcon {
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+  opacity: 0.8;
+}
+
+.uploadTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-heading);
+}
+
+.uploadFormats {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.previewContainer {
+  position: relative;
+  width: 100%;
+  max-height: 250px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.previewImg {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  background: #000;
+}
+
+.changeLabel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem;
+  backdrop-filter: blur(4px);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }

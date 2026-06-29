@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented tailor profile working hours validation schema (`SCRUM-24`):
+  - Created `WorkingHourDay` Pydantic model to strictly validate day-level opening times, closing times, and closed flags.
+  - Updated `working_hours` fields in Pydantic schemas to accept both `WorkingHourDay` objects and legacy string schedules to maintain backward compatibility.
+- Implemented background lead notifications preferences and delivery simulation service (`SCRUM-27`):
+  - Added `notifications_enabled` (default True) and `notification_channel` (default 'whatsapp') columns to `public.tailors` database table.
+  - Added notification columns to the `Tailor` SQLAlchemy ORM model and validation schemas.
+  - Implemented `NotificationService` simulating SMS/WhatsApp alerts for profile views, contact clicks, and lead submissions by logging to `docs/mock_notifications.log`.
+  - Configured FastAPI `BackgroundTasks` to asynchronously trigger alerts on profile views, clicks, and lead submissions, filtered by tailor opt-in settings.
+  - Added Test 17 to the integration test suite (`test_endpoints.py`) to verify end-to-end working hours updates, background notification creation, and opt-out preferences.
 - Configured Cloudinary CDN for portfolio image uploads under task `SCRUM-22`:
   - Added `cloudinary` dependency in `pyproject.toml`.
   - Added `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` to environment files.

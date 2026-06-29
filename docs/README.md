@@ -32,6 +32,18 @@ This directory is used to track every change, decision, branch, and feature impl
     * Blueprint for the backend team to hook up Cloudinary storage.
 14. **[Cloudinary CDN Integration Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-22-cloudinary-cdn-amankumar.md)**
     * Summary of backend Cloudinary configuration, SDK integration, and upload handler implementation with local fallback.
+15. **[Browse Portfolio Gallery Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-16-browse-portfolio-amankumar.md)**
+    * Summary of backend support for retrieving and returning portfolio images sorted by position.
+16. **[Contact Tailor via WhatsApp Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-17-whatsapp-contact-amankumar.md)**
+    * Summary of backend WhatsApp number response properties and click tracking analytics.
+17. **[Contact Tailor via Call Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-18-call-contact-amankumar.md)**
+    * Summary of backend contact number response properties and click tracking analytics.
+18. **[View Profile Dashboard Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-26-tailor-dashboard-amankumar.md)**
+    * Summary of tailor performance metrics tracking and profile completeness analytics.
+19. **[Set Working Hours Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-24-working-hours-antigravity.md)**
+    * Summary of working hours validation schema and day-level schedule configuration.
+20. **[Receive Lead Notifications Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-27-lead-notifications-antigravity.md)**
+    * Summary of SMS/WhatsApp preference settings and background alert flows for customer interactions.
 
 
 ---

@@ -33,6 +33,8 @@ class Tailor(Base):
     working_hours: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     whatsapp_clicks: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
     call_clicks: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
+    notifications_enabled: Mapped[bool] = mapped_column(Boolean, server_default="true", default=True, nullable=False)
+    notification_channel: Mapped[str] = mapped_column(String, server_default="'whatsapp'", default="whatsapp", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )

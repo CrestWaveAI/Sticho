@@ -102,6 +102,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `create_customers_table` | Adds public.customers table for customer accounts (SCRUM-10) | Up | Low | Applied |
 | `create_reviews_table` | Adds public.reviews table with foreign keys and unique constraints (SCRUM-19) | Up | Low | Applied |
 | `add_tailor_click_tracking`| Adds whatsapp_clicks and call_clicks to public.tailors table (SCRUM-26) | Up | Low | Applied |
+| `add_tailor_notifications_settings`| Adds notifications_enabled and notification_channel columns to public.tailors table (SCRUM-27) | Up | Low | Applied |
 
 ---
 
@@ -148,6 +149,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-29:** Implemented tailor profile working hours validation schema (`SCRUM-24`) and background lead notifications preferences and delivery simulation service (`SCRUM-27`). Updated `Tailor` SQLAlchemy ORM models with server defaults for `notifications_enabled` and `notification_channel` columns, updated validation schemas to enforce strict formatting for daily opening/closing times via Pydantic `WorkingHourDay`, built an asynchronous `NotificationService` simulating alerts to `docs/mock_notifications.log`, and integrated `BackgroundTasks` across profile views, click tracks, and lead capture submissions. Added Test 17 to integration tests checking the full settings update and event tracking logs.
 * **2026-06-29:** Configured Cloudinary CDN for portfolio image uploads under task `SCRUM-22`. Added `cloudinary` dependency, configured `.env` and `.env.example` placeholder variables, and refactored the backend endpoint `POST /api/v1/tailors/{tailor_id}/portfolio/upload` to upload incoming assets directly to Cloudinary. Implemented local filesystem fallback for offline/test environments to ensure all integration tests continue passing.
 * **2026-06-28:** Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26). Created `Customer` and `Review` ORM models and schemas. Created customer auth endpoints (register, login, Google OAuth). Created reviews endpoints (submit with duplicate reviews blocking, list reviews by tailor, and auto-aggregate tailor ratings). Updated the `Tailor` model/database with `whatsapp_clicks` and `call_clicks` columns, created click tracking endpoints, and built a secure tailor dashboard statistics endpoint. Updated the SQLite mock PostgREST client and test suites, adding Tests 14, 15, and 16.
 * **2026-06-28:** Redesigned tailor authentication under `SCRUM-20` to support Email + password registration/login and Google OAuth registration/login. Dropped OTP codes verification flow and `public.otp_codes` table. Added `hashed_password` and `google_id` columns to `public.tailors` table, set email to NOT NULL and UNIQUE, and made address and contact_number optional. Built cryptographic hashing and session token utilities, updated schemas, updated Auth and Tailor API endpoints, and replaced OTP tests with email/google integration tests (Tests 11-13, 13b).

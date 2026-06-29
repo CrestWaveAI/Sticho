@@ -31,6 +31,8 @@ async def register_tailor(payload: TailorRegister):
         "is_verified": False,
         "rating": 0.0,
         "reviews_count": 0,
+        "whatsapp_clicks": 0,
+        "call_clicks": 0,
         "created_at": datetime.utcnow().isoformat()
     }
     
@@ -115,6 +117,8 @@ async def google_auth(payload: GoogleAuthRequest):
                 "is_verified": False,
                 "rating": 0.0,
                 "reviews_count": 0,
+                "whatsapp_clicks": 0,
+                "call_clicks": 0,
                 "created_at": datetime.utcnow().isoformat()
             }
             create_result = sb.table("tailors").insert(new_tailor).execute().data

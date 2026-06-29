@@ -13,6 +13,8 @@ from app.models.category import Category
 from app.models.service import Service
 from app.models.portfolio import PortfolioImage
 from app.models.lead import Lead
+from app.models.customer import Customer
+from app.models.review import Review
 
 from app.schemas.tailor import TailorPublicResponse
 

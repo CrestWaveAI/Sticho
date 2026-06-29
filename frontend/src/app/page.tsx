@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition, useRef } from "react";
+import React, { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
@@ -8,9 +8,18 @@ import {
   autocompleteLocations, 
   submitLead, 
   fetchCategories,
-  Tailor, 
+  Tailor,
   LocationInfo
 } from "./api";
+
+export interface SuggestionItem {
+  id: string;
+  type: "location" | "tailor" | "category";
+  title: string;
+  subtitle: string;
+  value: string;
+  data: Tailor | LocationInfo | string;
+}
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,13 +46,16 @@ export default function Home() {
     }
     loadCategories();
   }, []);
+  const [allTailors, setAllTailors] = useState<Tailor[]>([]);
   const [tailorsList, setTailorsList] = useState<Tailor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending] = useTransition();
 
   // Autocomplete suggestions
-  const [suggestions, setSuggestions] = useState<LocationInfo[]>([]);
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Lead Modal & Unlocked Gated contacts
@@ -64,7 +76,7 @@ export default function Home() {
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
 
-  // Load unlocked contacts from localStorage on mount
+  // Load unlocked contacts from localStorage on mount & prefetch tailors for instant autocomplete
   useEffect(() => {
     try {
       const stored = localStorage.getItem("unlocked_tailors");
@@ -77,44 +89,62 @@ export default function Home() {
     } catch (e) {
       console.error("Failed to load unlocked tailors from localStorage:", e);
     }
+
+    async function loadAllTailors() {
+      try {
+        const res = await fetchTailors({});
+        setAllTailors(res);
+      } catch (e) {
+        console.error("Failed to prefetch tailors for autocomplete:", e);
+      }
+    }
+    loadAllTailors();
   }, []);
 
-  // Fetch tailors list on query or category change
+  // Fetch tailors list on query or category change (Universal Search client-side parsing)
   useEffect(() => {
     async function loadTailors() {
       setIsLoading(true);
       try {
-        // Query param resolution:
-        // We will query by category (using first active filter if selected)
-        // and match query based on freeform string
         const categoryFilter = selectedCategories.length > 0 ? selectedCategories[0] : undefined;
-        
-        const params: { locality?: string; city?: string; pin_code?: string; category?: string } = {
+        const params: { category?: string } = {
           category: categoryFilter,
         };
 
-        const trimmedQuery = submittedQuery.trim();
+        const data = await fetchTailors(params);
+        
+        let finalData = data;
+        const trimmedQuery = submittedQuery.trim().toLowerCase();
         if (trimmedQuery) {
-          // If it looks like a 6 digit pin code
           if (/^\d{6}$/.test(trimmedQuery)) {
-            params.pin_code = trimmedQuery;
+            finalData = data.filter(t => t.location?.pin_code === trimmedQuery);
           } else if (trimmedQuery.includes(",")) {
-            // Split autocomplete search query by comma into separate locality and city parameters
             const parts = trimmedQuery.split(",");
-            if (parts[0]) params.locality = parts[0].trim();
-            if (parts[1]) params.city = parts[1].trim();
+            const locQuery = parts[0]?.trim().toLowerCase() || "";
+            const cityQuery = parts[1]?.trim().toLowerCase() || "";
+            finalData = data.filter(t => 
+              t.location && 
+              (t.location.name.toLowerCase().includes(locQuery) || locQuery.includes(t.location.name.toLowerCase())) &&
+              (t.location.city.toLowerCase().includes(cityQuery) || cityQuery.includes(t.location.city.toLowerCase()))
+            );
           } else {
-            // Otherwise match locality name
-            params.locality = trimmedQuery;
+            // Universal Search Match across names, bio, locations, and categories
+            finalData = data.filter(t => 
+              t.name.toLowerCase().includes(trimmedQuery) ||
+              (t.bio && t.bio.toLowerCase().includes(trimmedQuery)) ||
+              (t.location && (
+                t.location.name.toLowerCase().includes(trimmedQuery) ||
+                t.location.city.toLowerCase().includes(trimmedQuery) ||
+                t.location.pin_code.includes(trimmedQuery)
+              )) ||
+              t.categories.some(c => c.toLowerCase().includes(trimmedQuery))
+            );
           }
         }
 
-        const data = await fetchTailors(params);
-        
         // If multiple categories are selected, filter client-side additionally
-        let finalData = data;
         if (selectedCategories.length > 1) {
-          finalData = data.filter((tailor) =>
+          finalData = finalData.filter((tailor) =>
             selectedCategories.every((cat) => tailor.categories.includes(cat))
           );
         }
@@ -129,25 +159,68 @@ export default function Home() {
     loadTailors();
   }, [submittedQuery, selectedCategories]);
 
-  // Autocomplete fetcher
+  // Autocomplete fetcher (Universal search over locations, shop names, and categories)
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (searchQuery.trim().length >= 2) {
+      const query = searchQuery.trim().toLowerCase();
+      if (query.length >= 2) {
+        setIsLoadingSuggestions(true);
         try {
-          const res = await autocompleteLocations(searchQuery);
-          setSuggestions(res);
+          // 1. Fetch location suggestions from API
+          const locRes = await autocompleteLocations(searchQuery);
+          const locationSuggestions: SuggestionItem[] = locRes.map(loc => ({
+            id: `loc-${loc.id}`,
+            type: "location",
+            title: loc.name,
+            subtitle: `${loc.city} (${loc.pin_code})`,
+            value: `${loc.name}, ${loc.city}`,
+            data: loc
+          }));
+
+          // 2. Filter tailors/shops in memory
+          const tailorSuggestions: SuggestionItem[] = allTailors
+            .filter(t => t.name.toLowerCase().includes(query) || (t.bio && t.bio.toLowerCase().includes(query)))
+            .map(t => ({
+              id: `tailor-${t.id}`,
+              type: "tailor",
+              title: t.name,
+              subtitle: t.bio ? (t.bio.length > 50 ? `${t.bio.substring(0, 48)}...` : t.bio) : "Shop Profile",
+              value: t.name,
+              data: t
+            }));
+
+          // 3. Filter categories in memory
+          const categorySuggestions: SuggestionItem[] = categoriesList
+            .filter(c => c.toLowerCase().includes(query))
+            .map(c => ({
+              id: `cat-${c}`,
+              type: "category",
+              title: c,
+              subtitle: "Service Category",
+              value: c,
+              data: c
+            }));
+
+          setSuggestions([...tailorSuggestions, ...categorySuggestions, ...locationSuggestions]);
           setShowSuggestions(true);
+          setActiveIndex(-1);
         } catch (e) {
           console.error("Failed to fetch autocomplete suggestions:", e);
+          setSuggestions([]);
+          setShowSuggestions(true);
+        } finally {
+          setIsLoadingSuggestions(false);
         }
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
+        setIsLoadingSuggestions(false);
+        setActiveIndex(-1);
       }
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, allTailors, categoriesList]);
 
   // Close suggestions dropdown when clicking outside
   useEffect(() => {
@@ -164,6 +237,7 @@ export default function Home() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
+    setActiveIndex(-1);
     setSubmittedQuery(searchQuery.trim());
   };
 
@@ -184,12 +258,53 @@ export default function Home() {
   };
 
   // Select autocomplete suggestion
-  const handleSuggestionSelect = (loc: LocationInfo) => {
-    const displayValue = `${loc.name}, ${loc.city}`;
-    setSearchQuery(displayValue);
-    setSubmittedQuery(displayValue);
+  const handleSuggestionSelect = useCallback((item: SuggestionItem) => {
+    if (item.type === "category") {
+      // For categories, activate category filter chip and reset search inputs
+      setSelectedCategories([item.data as string]);
+      setSearchQuery("");
+      setSubmittedQuery("");
+    } else {
+      // For tailors and locations, set search input and execute search
+      setSearchQuery(item.value);
+      setSubmittedQuery(item.value);
+    }
     setShowSuggestions(false);
-  };
+    setActiveIndex(-1);
+  }, []);
+
+  // Keyboard navigation for autocomplete
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === "Escape") {
+        setShowSuggestions(false);
+        setActiveIndex(-1);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+        break;
+      case "Enter":
+        if (activeIndex >= 0 && activeIndex < suggestions.length) {
+          e.preventDefault();
+          handleSuggestionSelect(suggestions[activeIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowSuggestions(false);
+        setActiveIndex(-1);
+        break;
+    }
+  }, [showSuggestions, suggestions, activeIndex, handleSuggestionSelect]);
 
   // Submit Lead Capture
   const handleLeadSubmit = async (e: React.FormEvent) => {
@@ -315,6 +430,12 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim().length >= 2 && setShowSuggestions(true)}
+                onKeyDown={handleSearchKeyDown}
+                role="combobox"
+                aria-expanded={showSuggestions}
+                aria-autocomplete="list"
+                aria-controls="autocomplete-listbox"
+                aria-activedescendant={activeIndex >= 0 ? `autocomplete-option-${activeIndex}` : undefined}
               />
             </div>
             <button type="submit" className="search-button">
@@ -336,21 +457,60 @@ export default function Home() {
           </form>
 
           {/* Autocomplete suggestions dropdown */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="autocomplete-dropdown">
-              {suggestions.map((loc) => (
-                <div 
-                  key={loc.id} 
-                  className="autocomplete-item"
-                  onClick={() => handleSuggestionSelect(loc)}
-                >
-                  <span className="autocomplete-item-icon">📍</span>
-                  <div className="autocomplete-item-details">
-                    <span className="autocomplete-item-title">{loc.name}</span>
-                    <span className="autocomplete-item-subtitle">{loc.city} ({loc.pin_code})</span>
-                  </div>
+          {showSuggestions && (
+            <div className="autocomplete-dropdown" id="autocomplete-listbox" role="listbox">
+              {isLoadingSuggestions ? (
+                <div className="autocomplete-loading">
+                  <span className="autocomplete-loading-dot"></span>
+                  <span className="autocomplete-loading-dot"></span>
+                  <span className="autocomplete-loading-dot"></span>
                 </div>
-              ))}
+              ) : suggestions.length > 0 ? (
+                suggestions.map((item, index) => {
+                  let icon = "📍";
+                  let badgeClass = "autocomplete-badge-location";
+                  let badgeText = "Location";
+                  if (item.type === "tailor") {
+                    icon = "🏪";
+                    badgeClass = "autocomplete-badge-shop";
+                    badgeText = "Shop";
+                  } else if (item.type === "category") {
+                    icon = "🏷️";
+                    badgeClass = "autocomplete-badge-category";
+                    badgeText = "Category";
+                  }
+
+                  return (
+                    <div 
+                      key={item.id}
+                      id={`autocomplete-option-${index}`}
+                      className={`autocomplete-item${index === activeIndex ? " autocomplete-item--active" : ""}`}
+                      onClick={() => handleSuggestionSelect(item)}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      role="option"
+                      aria-selected={index === activeIndex}
+                    >
+                      <div className="autocomplete-item-left">
+                        <div className="autocomplete-item-icon-wrapper">
+                          {icon}
+                        </div>
+                        <div className="autocomplete-item-details">
+                          <span className="autocomplete-item-title">{item.title}</span>
+                          <span className="autocomplete-item-subtitle">{item.subtitle}</span>
+                        </div>
+                      </div>
+                      <span className={`autocomplete-badge ${badgeClass}`}>
+                        {badgeText}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="autocomplete-empty">
+                  <span className="autocomplete-empty-icon">🔍</span>
+                  <span>No matches found</span>
+                </div>
+              )}
             </div>
           )}
         </div>

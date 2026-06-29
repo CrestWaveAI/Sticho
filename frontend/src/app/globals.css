@@ -20,6 +20,16 @@
   --accent: #f472b6;
   --success: #10b981;
   --star-color: #f59e0b;
+
+  /* UI Component variables mapping */
+  --color-surface: #101014;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-ink: #ffffff;
+  --color-ink-muted: #9ca3af;
+  --color-canvas: #070708;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --shadow-3: 0 20px 45px rgba(0, 0, 0, 0.65);
 }
 
 * {
@@ -1200,5 +1210,143 @@ a {
 .contact-action-btn.call:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Shortlist Feature Styles */
+.nav-link-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  position: relative;
+}
+
+.nav-link-btn:hover {
+  color: var(--text-heading);
+}
+
+.nav-link-btn.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.nav-link-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 9999px;
+  animation: scaleIn 0.2s ease forwards;
+}
+
+.shortlist-badge {
+  background: var(--primary);
+  color: #070708;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  box-shadow: 0 0 10px rgba(191, 145, 172, 0.5);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bookmark-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(15, 15, 18, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 5;
+}
+
+.bookmark-btn:hover {
+  background: rgba(232, 169, 207, 0.2);
+  border-color: rgba(232, 169, 207, 0.4);
+  color: var(--primary);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(191, 145, 172, 0.25);
+}
+
+.bookmark-btn:active {
+  transform: scale(0.95);
+}
+
+.bookmark-btn.active {
+  background: rgba(191, 145, 172, 0.15);
+  border-color: rgba(191, 145, 172, 0.5);
+  color: var(--primary);
+  box-shadow: 0 0 20px rgba(191, 145, 172, 0.35);
+}
+
+.bookmark-btn svg {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bookmark-btn:hover svg {
+  transform: scale(1.05);
+}
+
+.bookmark-btn.active svg {
+  animation: heartPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 

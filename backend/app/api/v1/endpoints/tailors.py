@@ -5,7 +5,7 @@ direct asyncpg connection, which avoids pooler auth issues.
 import uuid
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks
 from pydantic import BaseModel
 from typing import Any
 
@@ -49,6 +49,8 @@ def _row_to_public(row: dict) -> dict:
         "rating": float(row.get("rating") or 0),
         "reviews_count": row.get("reviews_count", 0),
         "created_at": row.get("created_at") or datetime.utcnow().isoformat(),
+        "notifications_enabled": row.get("notifications_enabled", True),
+        "notification_channel": row.get("notification_channel", "whatsapp"),
         "location": {
             "id": location.get("id"),
             "name": location.get("name"),
@@ -227,7 +229,7 @@ async def create_tailor(tailor_in: TailorCreate):
 
 
 @router.get("/{tailor_id}", response_model=TailorDetailResponse)
-async def get_tailor_detail(tailor_id: uuid.UUID):
+async def get_tailor_detail(tailor_id: uuid.UUID, background_tasks: BackgroundTasks):
     sb = get_supabase()
     data = (
         sb.table("tailors")
@@ -239,6 +241,10 @@ async def get_tailor_detail(tailor_id: uuid.UUID):
     )
     if not data:
         raise HTTPException(status_code=404, detail="Tailor not found")
+    
+    from app.services.notification import NotificationService
+    background_tasks.add_task(NotificationService.notify_event, data[0], "profile_view")
+    
     return _row_to_detail(data[0])
 
 
@@ -409,15 +415,19 @@ class ClickTrackingRequest(BaseModel):
     type: str = Field(..., description="Click type: 'whatsapp' or 'call'")
 
 @router.post("/{tailor_id}/track-click")
-async def track_click(tailor_id: uuid.UUID, payload: ClickTrackingRequest):
+async def track_click(
+    tailor_id: uuid.UUID, 
+    payload: ClickTrackingRequest,
+    background_tasks: BackgroundTasks
+):
     """
     Increment Call or WhatsApp click count for a tailor boutique.
     """
     sb = get_supabase()
     tailor_id_str = str(tailor_id)
     
-    # 1. Fetch current clicks
-    tailor_data = sb.table("tailors").select("whatsapp_clicks, call_clicks").eq("id", tailor_id_str).execute().data
+    # 1. Fetch current clicks and settings
+    tailor_data = sb.table("tailors").select("*").eq("id", tailor_id_str).execute().data
     if not tailor_data:
         raise HTTPException(status_code=404, detail="Tailor not found")
         
@@ -432,6 +442,15 @@ async def track_click(tailor_id: uuid.UUID, payload: ClickTrackingRequest):
         sb.table("tailors").update({"call_clicks": new_val}).eq("id", tailor_id_str).execute()
     else:
         raise HTTPException(status_code=400, detail="Invalid click type. Must be 'whatsapp' or 'call'")
+        
+    # 3. Trigger background notification
+    from app.services.notification import NotificationService
+    background_tasks.add_task(
+        NotificationService.notify_event, 
+        tailor, 
+        "contact_click", 
+        payload.type
+    )
         
     return {"message": "Click tracked successfully."}
 

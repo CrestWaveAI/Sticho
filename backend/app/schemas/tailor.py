@@ -5,6 +5,11 @@ from app.schemas.location import LocationResponse
 from app.schemas.service import ServiceDetailResponse
 from app.schemas.portfolio import PortfolioImageResponse
 
+class WorkingHourDay(BaseModel):
+    open: str | None = Field(None, description="Opening time (e.g. '09:00')")
+    close: str | None = Field(None, description="Closing time (e.g. '18:00')")
+    closed: bool = Field(False, description="Is the boutique closed on this day")
+
 class TailorBase(BaseModel):
     name: str = Field(..., description="Name of the tailor boutique")
     email: str = Field(..., description="Email address")
@@ -12,6 +17,8 @@ class TailorBase(BaseModel):
     address: str | None = Field(None, description="Street/location address details")
     gradient: str | None = Field(None, description="CSS gradient background for card display")
     is_verified: bool = Field(False, description="Verification status")
+    notifications_enabled: bool = Field(True, description="Enable profile views and contact alerts")
+    notification_channel: str = Field("whatsapp", description="Channel: 'whatsapp', 'sms', or 'both'")
 
 class TailorCreate(TailorBase):
     contact_number: str | None = Field(None, description="Phone number of the tailor")
@@ -48,7 +55,7 @@ class TailorDetailResponse(TailorPublicResponse):
     experience: int | None = Field(None, description="Years of experience")
     latitude: float | None = Field(None, description="Latitude coordinate")
     longitude: float | None = Field(None, description="Longitude coordinate")
-    working_hours: dict | None = Field(None, description="Working hours dictionary by day")
+    working_hours: dict[str, WorkingHourDay | str] | None = Field(None, description="Working hours dictionary by day")
     portfolio_images: list[PortfolioImageResponse] = Field([], description="List of portfolio images")
 
 # Private profile response (includes gated contact info - returned ONLY after lead submission)
@@ -72,4 +79,6 @@ class TailorUpdate(BaseModel):
     experience: int | None = Field(None, description="Years of experience")
     latitude: float | None = Field(None, description="Latitude coordinate")
     longitude: float | None = Field(None, description="Longitude coordinate")
-    working_hours: dict | None = Field(None, description="Working hours dictionary by day")
+    working_hours: dict[str, WorkingHourDay | str] | None = Field(None, description="Working hours dictionary by day")
+    notifications_enabled: bool | None = Field(None, description="Enable profile views and contact alerts")
+    notification_channel: str | None = Field(None, description="Channel: 'whatsapp', 'sms', or 'both'")

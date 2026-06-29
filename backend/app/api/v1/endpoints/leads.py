@@ -3,7 +3,7 @@ Lead capture endpoint — uses Supabase REST client.
 """
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 
 from app.core.supabase_client import get_supabase
 from app.schemas.lead import LeadCreate
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.post("", response_model=TailorPrivateResponse, status_code=status.HTTP_201_CREATED)
-async def create_lead(lead_in: LeadCreate):
+async def create_lead(lead_in: LeadCreate, background_tasks: BackgroundTasks):
     sb = get_supabase()
 
     # 1. Verify tailor exists and fetch full profile
@@ -42,7 +42,16 @@ async def create_lead(lead_in: LeadCreate):
         "created_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
 
-    # 3. Return private tailor profile (includes contact_number)
+    # 3. Trigger background notification
+    from app.services.notification import NotificationService
+    background_tasks.add_task(
+        NotificationService.notify_event,
+        tailor_row,
+        "lead_submission",
+        lead_in.requirement_description
+    )
+
+    # 4. Return private tailor profile (includes contact_number)
     from app.api.v1.endpoints.tailors import _row_to_detail
     detail_dict = _row_to_detail(tailor_row)
     return {

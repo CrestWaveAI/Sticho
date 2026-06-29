@@ -432,6 +432,7 @@ async def run_tests():
         patch("app.api.v1.endpoints.auth.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.customer_auth.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.reviews.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.tailors.cloudinary.uploader.upload", return_value={"secure_url": "https://res.cloudinary.com/demo/image/upload/sample.jpg"}),
     ]
     for p in patchers:
         p.start()
@@ -620,10 +621,10 @@ async def run_tests():
             files={"file": ("design2.jpg", b"fake jpeg content", "image/jpeg")},
             data={"caption": "Test Design 2"}
         )
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         img2 = response.json()
         img2_id = img2["id"]
-        assert img2["image_url"].startswith("/static/media/")
+        assert img2["image_url"].startswith("/static/media/") or "cloudinary" in img2["image_url"]
         assert img2["caption"] == "Test Design 2"
         print("  - Valid portfolio file upload verified.")
 
@@ -891,6 +892,109 @@ async def run_tests():
         assert "recent_leads" in dashboard
         print(f"  - Tailor dashboard statistics: Clicks (Call: {dashboard['call_clicks']}, WA: {dashboard['whatsapp_clicks']}), Completeness: {dashboard['completeness_percentage']}%")
         print("Test 16 Passed!")
+
+        # Test 17: Working Hours & Lead/View Notifications (SCRUM-24 & SCRUM-27)
+        print("\nTest 17: Run Working Hours & Mock Lead/View Notifications")
+        # 1. Update working hours and notification preferences
+        update_payload = {
+            "working_hours": {
+                "monday": {"open": "09:00", "close": "18:00", "closed": False},
+                "sunday": {"open": None, "close": None, "closed": True}
+            },
+            "notifications_enabled": True,
+            "notification_channel": "both"
+        }
+        response = await client.put(
+            f"/api/v1/tailors/{tailor_id_registered}",
+            json=update_payload,
+            headers={"Authorization": f"Bearer {tailor_token}"}
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        updated_profile = response.json()
+        assert updated_profile["working_hours"]["monday"]["open"] == "09:00"
+        assert updated_profile["working_hours"]["sunday"]["closed"] is True
+        assert updated_profile["notifications_enabled"] is True
+        assert updated_profile["notification_channel"] == "both"
+        print("  - Working hours and notification settings updated successfully.")
+
+        # 2. Trigger profile view and check log entries
+        # Clear mock notification log first if it exists
+        import os
+        log_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "docs", "mock_notifications.log"))
+        if os.path.exists(log_file):
+            os.remove(log_file)
+        # Make the tailor verified so the public GET endpoint doesn't 404
+        cursor = db_conn.cursor()
+        cursor.execute("UPDATE tailors SET is_verified = 1 WHERE id = ?", (normalize_val(tailor_id_registered),))
+        db_conn.commit()
+
+        response = await client.get(
+            f"/api/v1/tailors/{tailor_id_registered}",
+            headers={"Authorization": f"Bearer {tailor_token}"}
+        )
+        assert response.status_code == 200
+        # Wait a moment for background task to execute
+        import asyncio
+        await asyncio.sleep(0.1)
+        assert os.path.exists(log_file), "Mock notification log was not created!"
+        with open(log_file, "r") as f:
+            log_content = f.read()
+        assert "Event: PROFILE_VIEW" in log_content, f"Log content was: {log_content}"
+        assert "Channel: BOTH" in log_content
+        print("  - Profile view triggered background notification successfully.")
+
+        # 3. Trigger contact click and check logs
+        response = await client.post(
+            f"/api/v1/tailors/{tailor_id_registered}/track-click",
+            json={"type": "whatsapp"}
+        )
+        assert response.status_code == 200
+        await asyncio.sleep(0.1)
+        with open(log_file, "r") as f:
+            log_content = f.read()
+        assert "Event: CONTACT_CLICK" in log_content
+        print("  - Contact click triggered background notification successfully.")
+
+        # 4. Trigger lead submission and check logs
+        lead_payload = {
+            "tailor_id": tailor_id_registered,
+            "customer_name": "Test Customer",
+            "customer_mobile": "9876543210",
+            "requirement_description": "Stitch a custom designer suit"
+        }
+        response = await client.post("/api/v1/leads", json=lead_payload)
+        assert response.status_code == 201
+        await asyncio.sleep(0.1)
+        with open(log_file, "r") as f:
+            log_content = f.read()
+        assert "Event: LEAD_SUBMISSION" in log_content
+        assert "Stitch a custom designer suit" in log_content
+        print("  - Lead submission triggered background notification successfully.")
+
+        # 5. Opt-out and verify no notification is sent
+        opt_out_payload = {
+            "notifications_enabled": False
+        }
+        response = await client.put(
+            f"/api/v1/tailors/{tailor_id_registered}",
+            json=opt_out_payload,
+            headers={"Authorization": f"Bearer {tailor_token}"}
+        )
+        assert response.status_code == 200
+        
+        # Clear log file
+        os.remove(log_file)
+        # Trigger profile view
+        response = await client.get(
+            f"/api/v1/tailors/{tailor_id_registered}",
+            headers={"Authorization": f"Bearer {tailor_token}"}
+        )
+        assert response.status_code == 200
+        await asyncio.sleep(0.1)
+        assert not os.path.exists(log_file), "Mock notification log was written even though notifications are disabled!"
+        print("  - Opt-out settings respected. No notifications triggered.")
+        print("Test 17 Passed!")
+
 
     for p in patchers:
         p.stop()

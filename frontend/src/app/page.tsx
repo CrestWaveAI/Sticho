@@ -58,6 +58,10 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Shortlist State
+  const [shortlistedIds, setShortlistedIds] = useState<string[]>([]);
+  const [showOnlyShortlist, setShowOnlyShortlist] = useState(false);
+
   // Lead Modal & Unlocked Gated contacts
   const [selectedTailorForLead, setSelectedTailorForLead] = useState<Tailor | null>(null);
   const [unlockedContacts, setUnlockedContacts] = useState<{ 
@@ -76,7 +80,7 @@ export default function Home() {
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
   const [leadError, setLeadError] = useState("");
 
-  // Load unlocked contacts from localStorage on mount & prefetch tailors for instant autocomplete
+  // Load unlocked contacts & shortlists from localStorage on mount & prefetch tailors for instant autocomplete
   useEffect(() => {
     try {
       const stored = localStorage.getItem("unlocked_tailors");
@@ -88,6 +92,18 @@ export default function Home() {
       }
     } catch (e) {
       console.error("Failed to load unlocked tailors from localStorage:", e);
+    }
+
+    try {
+      const storedShortlist = localStorage.getItem("shortlisted_tailors");
+      if (storedShortlist) {
+        const parsed = JSON.parse(storedShortlist);
+        setTimeout(() => {
+          setShortlistedIds(parsed);
+        }, 0);
+      }
+    } catch (e) {
+      console.error("Failed to load shortlist from localStorage:", e);
     }
 
     async function loadAllTailors() {
@@ -149,6 +165,11 @@ export default function Home() {
           );
         }
 
+        // Filter by shortlist if active
+        if (showOnlyShortlist) {
+          finalData = finalData.filter((tailor) => shortlistedIds.includes(tailor.id));
+        }
+
         setTailorsList(finalData);
       } catch (err) {
         console.error("Failed to load tailors:", err);
@@ -157,7 +178,7 @@ export default function Home() {
       }
     }
     loadTailors();
-  }, [submittedQuery, selectedCategories]);
+  }, [submittedQuery, selectedCategories, showOnlyShortlist, shortlistedIds]);
 
   // Autocomplete fetcher (Universal search over locations, shop names, and categories)
   useEffect(() => {
@@ -255,6 +276,7 @@ export default function Home() {
     setSearchQuery("");
     setSubmittedQuery("");
     setSelectedCategories([]);
+    setShowOnlyShortlist(false);
   };
 
   // Select autocomplete suggestion
@@ -271,6 +293,17 @@ export default function Home() {
     }
     setShowSuggestions(false);
     setActiveIndex(-1);
+  }, []);
+
+  // Toggle saving/shortlisting tailors
+  const toggleShortlist = useCallback((tailorId: string) => {
+    setShortlistedIds((prev) => {
+      const next = prev.includes(tailorId)
+        ? prev.filter((id) => id !== tailorId)
+        : [...prev, tailorId];
+      localStorage.setItem("shortlisted_tailors", JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   // Keyboard navigation for autocomplete
@@ -381,7 +414,21 @@ export default function Home() {
           <span className="logo-text">Stichoh</span>
         </div>
         <nav className="nav-links" style={{ alignItems: "center" }}>
-          <a href="#" className="nav-link active">Explore Tailors</a>
+          <button 
+            onClick={() => setShowOnlyShortlist(false)} 
+            className={`nav-link-btn ${!showOnlyShortlist ? "active" : ""}`}
+          >
+            Explore Tailors
+          </button>
+          <button 
+            onClick={() => setShowOnlyShortlist(true)} 
+            className={`nav-link-btn ${showOnlyShortlist ? "active" : ""}`}
+          >
+            My Shortlist
+            {shortlistedIds.length > 0 && (
+              <span className="shortlist-badge">{shortlistedIds.length}</span>
+            )}
+          </button>
           <a href="#" className="nav-link">Bookings</a>
           <a href="#" className="nav-link">How it Works</a>
           <Link href="/register" className="nav-link">Join as Partner</Link>
@@ -553,6 +600,10 @@ export default function Home() {
             <h2 className="results-count">
               {isLoading || isPending ? (
                 "Updating listings..."
+              ) : showOnlyShortlist ? (
+                <>
+                  Showing <span>{tailorsList.length}</span> saved tailor{tailorsList.length !== 1 ? "s" : ""} in shortlist
+                </>
               ) : (
                 <>
                   Showing <span>{tailorsList.length}</span> tailor{tailorsList.length !== 1 ? "s" : ""}
@@ -587,13 +638,17 @@ export default function Home() {
             ) : tailorsList.length === 0 ? (
               // Clean "No Results" state
               <div className="no-results">
-                <div className="no-results-icon">✂</div>
-                <h3 className="no-results-title">No Tailors Found</h3>
+                <div className="no-results-icon">{showOnlyShortlist ? "❤️" : "✂"}</div>
+                <h3 className="no-results-title">
+                  {showOnlyShortlist ? "Your Shortlist is Empty" : "No Tailors Found"}
+                </h3>
                 <p className="no-results-text">
-                  We couldn&apos;t find any tailors matching your search criteria. Try checking your spelling or clearing filters.
+                  {showOnlyShortlist 
+                    ? "Browse through our premium tailors and tap the heart icon on any profile card to save them here for quick comparison!" 
+                    : "We couldn't find any tailors matching your search criteria. Try checking your spelling or clearing filters."}
                 </p>
                 <button onClick={handleClearFilters} className="reset-btn">
-                  Reset Search & Filters
+                  {showOnlyShortlist ? "Browse All Tailors" : "Reset Search & Filters"}
                 </button>
               </div>
             ) : (
@@ -608,6 +663,28 @@ export default function Home() {
                       style={{ background: tailor.gradient }}
                     >
                       <div className="card-logo">✂</div>
+                      <button
+                        className={`bookmark-btn ${shortlistedIds.includes(tailor.id) ? "active" : ""}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleShortlist(tailor.id);
+                        }}
+                        aria-label={shortlistedIds.includes(tailor.id) ? "Remove from Shortlist" : "Save to Shortlist"}
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill={shortlistedIds.includes(tailor.id) ? "currentColor" : "none"}
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                        </svg>
+                      </button>
                     </div>
                     <div className="card-content">
                       <div className="card-top">

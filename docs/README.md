@@ -28,6 +28,8 @@ This directory is used to track every change, decision, branch, and feature impl
     * Summary of client-side shortlist storage and toggleable visual dashboard widgets.
 12. **[Upload Portfolio Images Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-22-upload-portfolio-jeelan80.md)**
     * Summary of dynamic portfolio dashboard uploads, size/type constraints, deletions, and position reordering.
+13. **[Cloudinary Backend Issue Setup](file:///Users/amankumar/Aman/Sticho/docs/BACKEND_CLOUDINARY_ISSUE.md)**
+    * Blueprint for the backend team to hook up Cloudinary storage.
 
 
 ---

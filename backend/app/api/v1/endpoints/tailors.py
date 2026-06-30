@@ -5,7 +5,8 @@ direct asyncpg connection, which avoids pooler auth issues.
 import uuid
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks, Request, Header
+from app.core.security import verify_token
 from pydantic import BaseModel
 from typing import Any
 
@@ -269,16 +270,38 @@ async def create_tailor(tailor_in: TailorCreate):
     }
 
 @router.get("/{tailor_id}", response_model=TailorDetailResponse)
-async def get_tailor_detail(tailor_id: uuid.UUID, background_tasks: BackgroundTasks):
+async def get_tailor_detail(
+    tailor_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    authorization: str | None = Header(None)
+):
     sb = get_supabase()
-    data = (
+    
+    # Allow fetching the profile details of unverified tailors if:
+    # 1. The request is authorized and matches the target tailor_id
+    # 2. Or the request referer indicates it is initiated from the partner dashboard
+    is_authorized = False
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        payload = verify_token(token)
+        if payload and payload.get("tailor_id") == str(tailor_id):
+            is_authorized = True
+            
+    referer = request.headers.get("referer", "")
+    if "/dashboard" in referer:
+        is_authorized = True
+        
+    query = (
         sb.table("tailors")
         .select("*, locations(*), services(*, categories(name)), portfolio_images(*)")
         .eq("id", str(tailor_id))
-        .eq("is_verified", True)
-        .execute()
-        .data
     )
+    
+    if not is_authorized:
+        query = query.eq("is_verified", True)
+        
+    data = query.execute().data
     if not data:
         raise HTTPException(status_code=404, detail="Tailor not found")
     

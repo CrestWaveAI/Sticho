@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`):
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
+- Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}`:
+  - Allowed unverified tailors to retrieve their own profiles when authenticated or via Referer-based dashboard access, preventing Settings page crashes.
 
 ### Added
 - Implemented `GET /api/v1/leads` backend endpoint to allow tailors to query their complete leads list from the database.

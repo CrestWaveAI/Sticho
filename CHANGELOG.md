@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
 
 ### Added
+- Implemented `GET /api/v1/leads` backend endpoint to allow tailors to query their complete leads list from the database.
 - Integrated Tailor Authentication by removing fake OTP system and connecting registration to `POST /api/v1/auth/register` and creating a login page (`/login`) connected to `POST /api/v1/auth/login` (`SCRUM-10`).
 - Integrated dynamic Tailor Dashboard overview page loading lead counts, WhatsApp/Call clicks stats, completeness progress bar, missing fields checklists, and recent leads list from the backend secure dashboard endpoint (`SCRUM-26`).
 - Integrated Customer Auth on the search discovery page with registration, email login, and Google OAuth modals (`SCRUM-10`).

@@ -1005,7 +1005,7 @@ async def run_tests():
         )
         with patch("sentry_sdk.Hub.current.capture_exception") as mock_capture:
             try:
-                response = await client.get("/trigger-error")
+                response = await client.get("/sentry-debug")
                 assert response.status_code == 500
             except ZeroDivisionError:
                 pass

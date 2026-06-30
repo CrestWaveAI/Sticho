@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`):
   - Configured `SENTRY_DSN` placeholder in `.env.example` and local `.env` configuration files.
-  - Initialized Sentry SDK with `FastApiIntegration` conditionally in `backend/app/main.py`.
-  - Added a `GET /trigger-error` endpoint to main router to simulate application errors and test exception capture reporting.
+  - Initialized Sentry SDK with `FastApiIntegration` and `send_default_pii=True` conditionally in `backend/app/main.py`.
+  - Added a `GET /sentry-debug` endpoint to main router to simulate application errors and test exception capture reporting.
   - Added Test 18 in `backend/app/test_endpoints.py` to assert correct exception capture and testing endpoints.
 - Implemented tailor profile working hours validation schema (`SCRUM-24`):
   - Created `WorkingHourDay` Pydantic model to strictly validate day-level opening times, closing times, and closed flags.

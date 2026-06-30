@@ -289,3 +289,164 @@ export async function reorderPortfolioImages(
   }
   return res.json();
 }
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  tailor_id?: string;
+  customer_id?: string;
+}
+
+export interface Review {
+  id: string;
+  tailor_id: string;
+  customer_id: string;
+  rating: number;
+  comment: string;
+  status: string;
+  created_at: string;
+  customer_name: string;
+}
+
+export interface DashboardLead {
+  id: string;
+  tailor_id: string;
+  customer_name: string;
+  customer_mobile: string;
+  requirement_description: string;
+  created_at: string;
+}
+
+export interface TailorDashboardData {
+  approval_status: string;
+  lead_count: number;
+  whatsapp_clicks: number;
+  call_clicks: number;
+  completeness_percentage: number;
+  missing_fields: string[];
+  recent_leads: DashboardLead[];
+}
+
+export async function loginTailor(payload: Record<string, string>): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Invalid email or password");
+  }
+  return res.json();
+}
+
+export async function registerTailorActual(payload: Record<string, string>): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to register tailor account");
+  }
+  return res.json();
+}
+
+export async function registerCustomer(payload: Record<string, string>): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/customer-auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Registration failed");
+  }
+  return res.json();
+}
+
+export async function loginCustomer(payload: Record<string, string>): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/customer-auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Invalid email or password");
+  }
+  return res.json();
+}
+
+export async function googleAuthCustomer(payload: Record<string, string>): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/customer-auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Google authentication failed");
+  }
+  return res.json();
+}
+
+export async function fetchReviews(tailorId: string): Promise<Review[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/reviews/tailor/${tailorId}`);
+  if (!res.ok) throw new Error("Failed to fetch reviews");
+  return res.json();
+}
+
+export async function submitReview(
+  payload: { tailor_id: string; rating: number; comment: string },
+  customerToken: string
+): Promise<Review> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${customerToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to submit review");
+  }
+  return res.json();
+}
+
+export async function fetchTailorDashboard(
+  tailorId: string,
+  tailorToken: string
+): Promise<TailorDashboardData> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${tailorId}/dashboard`, {
+    headers: {
+      "Authorization": `Bearer ${tailorToken}`,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to fetch dashboard data");
+  }
+  return res.json();
+}
+
+export async function trackClick(
+  tailorId: string,
+  type: "whatsapp" | "call"
+): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${tailorId}/track-click`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ type }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to track click");
+  }
+  return res.json();
+}

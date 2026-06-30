@@ -27,6 +27,8 @@
   --color-ink: #ffffff;
   --color-ink-muted: #9ca3af;
   --color-canvas: #070708;
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --radius-lg: 16px;
   --radius-sm: 8px;
   --shadow-3: 0 20px 45px rgba(0, 0, 0, 0.65);

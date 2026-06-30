@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Integrated Tailor Authentication by removing fake OTP system and connecting registration to `POST /api/v1/auth/register` and creating a login page (`/login`) connected to `POST /api/v1/auth/login` (`SCRUM-10`).
+- Integrated dynamic Tailor Dashboard overview page loading lead counts, WhatsApp/Call clicks stats, completeness progress bar, missing fields checklists, and recent leads list from the backend secure dashboard endpoint (`SCRUM-26`).
+- Integrated Customer Auth on the search discovery page with registration, email login, and Google OAuth modals (`SCRUM-10`).
+- Integrated Ratings & Reviews by displaying review listings on tailor cards and enabling logged-in customers to submit reviews (`SCRUM-19`).
+- Hooked up WhatsApp and Call buttons on discover search page to backend track-click endpoints to track metrics (`SCRUM-26`).
+- Hooked up working hours configuration on Partner Settings dashboard with day-by-day scheduler, enabling closed checkboxes and open/close inputs (`SCRUM-24`).
+- Hooked up SMS/WhatsApp notifications toggle and channel selection on Partner Settings dashboard (`SCRUM-27`).
+- Rendered dynamic, formatted working hours (supporting both legacy string and new day-by-day JSON format) on public tailor discovery search cards (`SCRUM-24`).
 - Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`):
   - Configured `SENTRY_DSN` placeholder in `.env.example` and local `.env` configuration files.
   - Initialized Sentry SDK with `FastApiIntegration` and `send_default_pii=True` conditionally in `backend/app/main.py`.

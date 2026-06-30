@@ -180,9 +180,9 @@ async def create_tailor(tailor_in: TailorCreate):
     existing_tailors = sb.table("tailors").select("*").eq("email", tailor_in.email).execute().data
     if existing_tailors:
         existing_tailor = existing_tailors[0]
-        # If it has a password or google_id set, it means the tailor has registered their account,
-        # but needs onboarding. We update and enrich the record instead of raising an error.
-        if existing_tailor.get("hashed_password") or existing_tailor.get("google_id"):
+        # If the account exists but has not completed profile setup/onboarding yet,
+        # we update and enrich the record instead of raising an error.
+        if not existing_tailor.get("bio") or not existing_tailor.get("address"):
             update_data = {
                 "name": tailor_in.name,
                 "bio": tailor_in.bio,

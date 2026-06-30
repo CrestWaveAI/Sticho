@@ -166,20 +166,61 @@ async def search_tailors(
 
     return results
 
-
 @router.post("", response_model=TailorPrivateResponse)
 async def create_tailor(tailor_in: TailorCreate):
     """
     Register a new tailor profile.
     Checks that the email and phone number (if provided) are not registered.
+    If the email is already registered, and it's an account created during signup,
+    we update/enrich the existing record with the onboarding profile details.
     """
     sb = get_supabase()
     
     # 1. Check if email is already registered
-    existing_email = sb.table("tailors").select("id").eq("email", tailor_in.email).execute().data
-    if existing_email:
-        raise HTTPException(status_code=400, detail="Email already registered")
-        
+    existing_tailors = sb.table("tailors").select("*").eq("email", tailor_in.email).execute().data
+    if existing_tailors:
+        existing_tailor = existing_tailors[0]
+        # If it has a password or google_id set, it means the tailor has registered their account,
+        # but needs onboarding. We update and enrich the record instead of raising an error.
+        if existing_tailor.get("hashed_password") or existing_tailor.get("google_id"):
+            update_data = {
+                "name": tailor_in.name,
+                "bio": tailor_in.bio,
+                "address": tailor_in.address,
+                "gradient": tailor_in.gradient or existing_tailor.get("gradient"),
+                "whatsapp_number": tailor_in.whatsapp_number or existing_tailor.get("whatsapp_number"),
+                "location_id": str(tailor_in.location_id) if tailor_in.location_id else existing_tailor.get("location_id"),
+            }
+            if tailor_in.contact_number:
+                # Check if phone number is already registered under a different tailor
+                if tailor_in.contact_number != existing_tailor.get("contact_number"):
+                    phone_exists = sb.table("tailors").select("id").eq("contact_number", tailor_in.contact_number).execute().data
+                    if phone_exists:
+                        raise HTTPException(status_code=400, detail="Phone number already registered")
+                update_data["contact_number"] = tailor_in.contact_number
+                
+            result = (
+                sb.table("tailors")
+                .update(update_data)
+                .eq("id", existing_tailor["id"])
+                .select("*, locations(*)")
+                .execute()
+                .data
+            )
+            if not result:
+                raise HTTPException(status_code=500, detail="Failed to update tailor profile")
+            row = result[0]
+            row["services"] = []
+            row["portfolio_images"] = []
+            detail_dict = _row_to_detail(row)
+            return {
+                **detail_dict,
+                "contact_number": row.get("contact_number", ""),
+                "whatsapp_number": row.get("whatsapp_number")
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Email already registered")
+            
     # 2. Check if phone number is already registered under any tailor (if provided)
     if tailor_in.contact_number:
         tailors = sb.table("tailors").select("id").eq("contact_number", tailor_in.contact_number).execute().data
@@ -226,7 +267,6 @@ async def create_tailor(tailor_in: TailorCreate):
         "contact_number": row.get("contact_number", ""),
         "whatsapp_number": row.get("whatsapp_number")
     }
-
 
 @router.get("/{tailor_id}", response_model=TailorDetailResponse)
 async def get_tailor_detail(tailor_id: uuid.UUID, background_tasks: BackgroundTasks):

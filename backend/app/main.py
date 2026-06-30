@@ -14,6 +14,7 @@ if SENTRY_DSN:
         integrations=[FastApiIntegration()],
         traces_sample_rate=1.0,
         profiles_sample_rate=1.0,
+        send_default_pii=True,
     )
 
 app = FastAPI(
@@ -66,7 +67,7 @@ async def health_check():
     }
 
 
-@app.get("/trigger-error")
+@app.get("/sentry-debug")
 async def trigger_error():
     """Trigger a division by zero error for testing Sentry integration."""
     return 1 / 0

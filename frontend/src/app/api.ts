@@ -28,9 +28,16 @@ export interface PortfolioImage {
   created_at: string;
 }
 
+export interface WorkingHourDay {
+  open: string | null;
+  close: string | null;
+  closed: boolean;
+}
+
 export interface Tailor {
   id: string;
   name: string;
+  email?: string;
   bio: string | null;
   address: string;
   gradient: string;
@@ -45,6 +52,9 @@ export interface Tailor {
   longitude?: number | null;
   whatsapp_number?: string;
   experience?: number;
+  working_hours?: Record<string, WorkingHourDay | string> | null;
+  notifications_enabled?: boolean;
+  notification_channel?: string;
 }
 
 export interface LeadPayload {
@@ -161,6 +171,9 @@ export async function updateTailor(id: string, payload: {
   latitude?: number | null;
   longitude?: number | null;
   is_verified?: boolean;
+  working_hours?: Record<string, WorkingHourDay | string> | null;
+  notifications_enabled?: boolean;
+  notification_channel?: string;
 }): Promise<Tailor> {
   const res = await fetch(`${API_BASE_URL}/api/v1/tailors/${id}`, {
     method: "PUT",

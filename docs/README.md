@@ -46,6 +46,9 @@ This directory is used to track every change, decision, branch, and feature impl
     * Summary of SMS/WhatsApp preference settings and background alert flows for customer interactions.
 21. **[Error Monitoring & Alerts Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-39-error-monitoring-antigravity.md)**
     * Summary of Sentry SDK backend configuration, alerts setup, and testing endpoint.
+22. **[Simulated Services & Production Hookups Guide](file:///Users/amankumar/Aman/Sticho/docs/simulated-data-and-endpoints.md)**
+    * Comprehensive guide cataloging backend mocks (SMS, Google OAuth, Sentry, Cloudinary fallback) and production transition steps.
+
 
 
 ---

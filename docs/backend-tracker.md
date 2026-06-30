@@ -125,6 +125,7 @@ Logs database schema migrations (e.g. Alembic) to trace version history:
 | `DELETE` | `/api/v1/services/{service_id}` | Services | No | Delete a service listing | Active |
 | `GET` | `/api/v1/services/tailor/{tailor_id}` | Services | No | Retrieve all services for a specific tailor boutique | Active |
 | `POST` | `/api/v1/leads` | Leads | No | Submit a customer lead for a tailor; returns unlocked tailor contact details | Active |
+| `GET` | `/api/v1/leads` | Leads | Yes | Retrieve all customer leads submitted for the authenticated tailor | Active |
 | `GET` | `/api/v1/categories` | Categories | No | Retrieve all tailor specializations / categories | Active |
 | `POST` | `/api/v1/auth/register` | Auth | No | Register a new tailor account using email and password | Active |
 | `POST` | `/api/v1/auth/login` | Auth | No | Login an existing tailor account using email and password | Active |
@@ -150,6 +151,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-30:** Implemented `GET /api/v1/leads` endpoint allowing tailors to retrieve a list of all customer leads submitted to them. Gated with JWT bearer authentication, mapped `LeadResponse` schema, and added Test 19 verifying endpoint retrieval.
 * **2026-06-30:** Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors`. Under the new email signup system (`SCRUM-20`), a record is inserted during `/register`. During onboarding, the frontend calls `createTailor` (POST). Refactored `create_tailor` to detect if the email is already registered with a signed-up account and enrich/update the profile instead of throwing "Email already registered".
 * **2026-06-30:** Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`). Configured environment variable `SENTRY_DSN` in configurations, initialized Sentry with FastApiIntegration and send_default_pii=True in `app/main.py` conditionally, created a `GET /sentry-debug` endpoint to test exception captures, and added Test 18 verifying Sentry setup.
 * **2026-06-29:** Implemented tailor profile working hours validation schema (`SCRUM-24`) and background lead notifications preferences and delivery simulation service (`SCRUM-27`). Updated `Tailor` SQLAlchemy ORM models with server defaults for `notifications_enabled` and `notification_channel` columns, updated validation schemas to enforce strict formatting for daily opening/closing times via Pydantic `WorkingHourDay`, built an asynchronous `NotificationService` simulating alerts to `docs/mock_notifications.log`, and integrated `BackgroundTasks` across profile views, click tracks, and lead capture submissions. Added Test 17 to integration tests checking the full settings update and event tracking logs.

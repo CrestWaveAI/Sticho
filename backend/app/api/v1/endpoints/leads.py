@@ -3,11 +3,12 @@ Lead capture endpoint — uses Supabase REST client.
 """
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Depends
 
 from app.core.supabase_client import get_supabase
-from app.schemas.lead import LeadCreate
+from app.schemas.lead import LeadCreate, LeadResponse
 from app.schemas.tailor import TailorPrivateResponse
+from app.core.security import get_current_tailor_id
 
 router = APIRouter()
 
@@ -59,3 +60,30 @@ async def create_lead(lead_in: LeadCreate, background_tasks: BackgroundTasks):
         "contact_number": tailor_row.get("contact_number", ""),
         "whatsapp_number": tailor_row.get("whatsapp_number")
     }
+
+
+@router.get("", response_model=list[LeadResponse])
+async def list_leads(
+    tailor_id: uuid.UUID,
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
+    """
+    Retrieve all customer leads submitted for the authenticated tailor.
+    """
+    if str(tailor_id).replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view these leads"
+        )
+        
+    sb = get_supabase()
+    result = (
+        sb.table("leads")
+        .select("*")
+        .eq("tailor_id", str(tailor_id))
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+    return result or []
+

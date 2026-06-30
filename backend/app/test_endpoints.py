@@ -1012,6 +1012,33 @@ async def run_tests():
         print("  - Error triggering endpoint returned 500 / captured exception successfully.")
         print("Test 18 Passed!")
 
+        # Test 19: List Leads for Tailor
+        print("\nTest 19: List Leads for Tailor")
+        # 1. Capture a lead first
+        lead_payload = {
+            "tailor_id": str(test_tailor_id),
+            "customer_name": "Test Customer",
+            "customer_mobile": "+91 99999 88888",
+            "requirement_description": "Custom shirt"
+        }
+        lead_res = await client.post("/api/v1/leads", json=lead_payload)
+        assert lead_res.status_code == 201
+        
+        # 2. Generate a signed JWT token directly for the tailor
+        from app.core.security import create_token
+        token = create_token({"tailor_id": str(test_tailor_id)})
+        
+        # 3. Retrieve leads list with authorization header
+        headers = {"Authorization": f"Bearer {token}"}
+        leads_res = await client.get(f"/api/v1/leads?tailor_id={test_tailor_id}", headers=headers)
+        assert leads_res.status_code == 200
+        leads_list = leads_res.json()
+        assert len(leads_list) > 0
+        assert leads_list[0]["customer_name"] == "Test Customer"
+        print("  - Leads list retrieved successfully and gated correctly.")
+        print("Test 19 Passed!")
+
+
 
     for p in patchers:
         p.stop()

@@ -1,0 +1,71 @@
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0 0 0.5rem 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notificationCard {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: flex-start;
+}
+
+.iconWrapper {
+  background-color: var(--color-info-bg);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-info);
+}
+
+.iconWrapper.unread {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.content {
+  flex: 1;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 0 0 0.25rem 0;
+}
+
+.message {
+  color: var(--color-ink-muted);
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  margin-top: 0.5rem;
+}

@@ -1,0 +1,45 @@
+.header {
+  margin-bottom: 2rem;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chartCard {
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartTitle {
+  font-size: 1.125rem;
+  margin-bottom: 1.5rem;
+}
+
+.chartContainer {
+  flex: 1;
+  min-height: 0;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.summaryTitle {
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+  margin-bottom: 0.5rem;
+}
+
+.summaryValue {
+  font-size: 2rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-ink);
+}

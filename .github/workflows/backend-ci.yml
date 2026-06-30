@@ -37,4 +37,9 @@ jobs:
         run: uv sync
 
       - name: Validate FastAPI App
+        env:
+          DATABASE_URL: postgresql://postgres:placeholder@localhost:5432/postgres
+          SUPABASE_URL: https://placeholder-url.supabase.co
+          SUPABASE_KEY: placeholder-key
+          SUPABASE_SECRET_KEY: placeholder-key
         run: uv run python -c "from app.main import app; print('FastAPI app loaded successfully')"

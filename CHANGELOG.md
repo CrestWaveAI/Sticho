@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hooked up working hours configuration on Partner Settings dashboard with day-by-day scheduler, enabling closed checkboxes and open/close inputs (`SCRUM-24`).
 - Hooked up SMS/WhatsApp notifications toggle and channel selection on Partner Settings dashboard (`SCRUM-27`).
 - Rendered dynamic, formatted working hours (supporting both legacy string and new day-by-day JSON format) on public tailor discovery search cards (`SCRUM-24`).
+- Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`):
+  - Configured `SENTRY_DSN` placeholder in `.env.example` and local `.env` configuration files.
+  - Initialized Sentry SDK with `FastApiIntegration` and `send_default_pii=True` conditionally in `backend/app/main.py`.
+  - Added a `GET /sentry-debug` endpoint to main router to simulate application errors and test exception capture reporting.
+  - Added Test 18 in `backend/app/test_endpoints.py` to assert correct exception capture and testing endpoints.
 - Implemented tailor profile working hours validation schema (`SCRUM-24`):
   - Created `WorkingHourDay` Pydantic model to strictly validate day-level opening times, closing times, and closed flags.
   - Updated `working_hours` fields in Pydantic schemas to accept both `WorkingHourDay` objects and legacy string schedules to maintain backward compatibility.

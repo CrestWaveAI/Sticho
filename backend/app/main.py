@@ -1,8 +1,20 @@
 import os
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api.v1.router import api_router
+
+# Initialize Sentry if DSN is set in the environment
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FastApiIntegration()],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 app = FastAPI(
     title="StitchConnect API",
@@ -52,3 +64,10 @@ async def health_check():
         "service": "stitchconnect-backend",
         "version": "0.1.0",
     }
+
+
+@app.get("/trigger-error")
+async def trigger_error():
+    """Trigger a division by zero error for testing Sentry integration."""
+    return 1 / 0
+

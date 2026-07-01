@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { fetchTailorDetail, submitLead, fetchReviews, submitReview, trackClick, Tailor, Review } from '../../api';
-import { Card } from '@/components/ui/Card';
+
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -215,8 +215,9 @@ export default function TailorDetailsPage({ params }: PageProps) {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <div style={{ textAlign: 'center', padding: '5rem 0', color: 'var(--color-ink-muted)' }}>
-          <h2>Loading boutique profile details...</h2>
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner} />
+          <div className={styles.loadingText}>Loading boutique profile details...</div>
         </div>
       </div>
     );
@@ -225,9 +226,9 @@ export default function TailorDetailsPage({ params }: PageProps) {
   if (!tailor) {
     return (
       <div className={styles.container}>
-        <div style={{ textAlign: 'center', padding: '5rem 0', color: 'var(--color-ink-muted)' }}>
+        <div className={styles.errorState}>
           <h2>Boutique profile not found.</h2>
-          <Link href="/" className={styles.backLink} style={{ marginTop: '1.5rem', display: 'inline-block' }}>
+          <Link href="/">
             Back to Marketplace Discovery
           </Link>
         </div>
@@ -238,18 +239,25 @@ export default function TailorDetailsPage({ params }: PageProps) {
   return (
     <div className={styles.container}>
       <Link href="/" className={styles.backLink}>
-        ← Back to Marketplace Discovery
+        <span>←</span> Back to Marketplace Discovery
       </Link>
 
       <div className={styles.profileLayout}>
         <div className={styles.mainCol}>
           {/* Hero Banner Card */}
-          <article className={styles.heroCard}>
-            <div 
+          <article className={styles.heroCard}>              <div 
               className={styles.heroBanner}
               style={{ background: tailor.gradient || 'linear-gradient(135deg, #bf91ac 0%, #7d4d68 100%)' }}
             >
-              <div className={styles.logoBadge}>✂</div>
+              <div className={styles.heroPattern} />
+              <div className={styles.logoBadge}>
+                {tailor.name.charAt(0).toUpperCase()}
+              </div>
+              {tailor.is_verified && (
+                <div className={styles.verifiedBadge}>
+                  ✓ Verified Partner
+                </div>
+              )}
             </div>
             <div className={styles.heroInfo}>
               <div className={styles.headerRow}>
@@ -261,6 +269,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
                 </div>
               </div>
               <p className={styles.subtitle}>
+                <span className={styles.subtitleIcon}>📍</span>
                 {tailor.location ? `${tailor.location.name}, ${tailor.location.city} (${tailor.location.pin_code})` : 'Location not specified'}
               </p>
 
@@ -275,7 +284,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
                 </div>
                 <div className={styles.metadataItem}>
                   <span className={styles.metaLabel}>Verification Status</span>
-                  <span className={styles.metaVal} style={{ color: 'var(--color-success)' }}>Approved Partner</span>
+                  <span className={`${styles.metaVal} ${styles.approved}`}>Approved Partner</span>
                 </div>
               </div>
             </div>
@@ -283,13 +292,19 @@ export default function TailorDetailsPage({ params }: PageProps) {
 
           {/* Business Biography */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>About Boutique</h2>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionTitleIcon}>✦</span>
+              About Boutique
+            </h2>
             <p className={styles.bioText}>{tailor.bio || 'No bio details provided.'}</p>
           </section>
 
           {/* Service Specializations */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Specializations & Services</h2>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionTitleIcon}>◈</span>
+              Specializations & Services
+            </h2>
             <div className={styles.categoryContainer}>
               {tailor.categories.length > 0 ? (
                 tailor.categories.map(cat => (
@@ -305,17 +320,29 @@ export default function TailorDetailsPage({ params }: PageProps) {
 
           {/* Portfolio Image Gallery */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Work Portfolio Gallery</h2>
+            <h2 className={styles.sectionTitle}>
+              <span className={styles.sectionTitleIcon}>◉</span>
+              Work Portfolio Gallery
+            </h2>
             <div className={styles.portfolioGrid}>
               {tailor.portfolio_images && tailor.portfolio_images.length > 0 ? (
                 tailor.portfolio_images.map(img => (
-                  <div key={img.id} className={styles.portfolioCard} style={{ backgroundImage: `url(${img.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', minHeight: '180px' }} />
+                  <div key={img.id} className={styles.portfolioCard} 
+                    style={{ backgroundImage: `url(${img.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} 
+                    title={img.caption || ''}
+                  />
                 ))
               ) : (
                 <>
-                  <div className={styles.portfolioCard}>Sample Styling 1</div>
-                  <div className={styles.portfolioCard}>Sample Styling 2</div>
-                  <div className={styles.portfolioCard}>Sample Styling 3</div>
+                  <div className={styles.portfolioCard}>
+                    <span className={styles.placeholderText}>Sample Styling 1</span>
+                  </div>
+                  <div className={styles.portfolioCard}>
+                    <span className={styles.placeholderText}>Sample Styling 2</span>
+                  </div>
+                  <div className={styles.portfolioCard}>
+                    <span className={styles.placeholderText}>Sample Styling 3</span>
+                  </div>
                 </>
               )}
             </div>
@@ -324,14 +351,17 @@ export default function TailorDetailsPage({ params }: PageProps) {
           {/* Dynamic Reviews & Submission Form */}
           <section className={`${styles.section} ${styles.reviewsSection}`}>
             <div className={styles.reviewsHeader}>
-              <h2 className={styles.sectionTitle}>Customer Feedback ({reviewsList.length})</h2>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.sectionTitleIcon}>★</span>
+                Customer Feedback ({reviewsList.length})
+              </h2>
             </div>
 
             <div className={styles.reviewsList}>
               {isLoadingReviews ? (
-                <div style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem' }}>Loading customer feedback list...</div>
+                <div className={styles.loadingText}>Loading customer feedback list...</div>
               ) : reviewsList.length === 0 ? (
-                <div style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem' }}>No reviews submitted yet. Be the first to share your experience!</div>
+                <div className={styles.loadingText}>No reviews submitted yet. Be the first to share your experience!</div>
               ) : (
                 reviewsList.map(rev => (
                   <article key={rev.id} className={styles.reviewItem}>
@@ -341,7 +371,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
                         {new Date(rev.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     </div>
-                    <div style={{ color: '#fbbf24', fontSize: '1rem', marginBottom: '0.5rem' }}>
+                    <div className={styles.reviewStars}>
                       {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
                     </div>
                     <p className={styles.reviewComment}>{rev.comment}</p>
@@ -353,7 +383,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
             {/* Submit Review Form */}
             {customerToken ? (
               <form onSubmit={handleReviewSubmit} className={styles.reviewForm}>
-                <h3 style={{ marginTop: 0, marginBottom: '1.25rem' }}>Write a Review</h3>
+                <h3 className={styles.reviewFormTitle}>Write a Review</h3>
                 
                 <div className={styles.ratingSelector}>
                   <span className={styles.ratingLabel}>Select Star Rating:</span>
@@ -363,6 +393,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
                       <button
                         key={val}
                         type="button"
+                        aria-label={`${val} star${val !== 1 ? 's' : ''}`}
                         onClick={() => setReviewRating(val)}
                         className={`${styles.starBtn} ${val <= reviewRating ? styles.selected : ''}`}
                       >
@@ -389,9 +420,9 @@ export default function TailorDetailsPage({ params }: PageProps) {
                 </Button>
               </form>
             ) : (
-              <div className={styles.reviewForm} style={{ textAlign: 'center', backgroundColor: 'var(--color-canvas)' }}>
-                <h3 style={{ marginTop: 0, color: 'var(--color-ink-muted)' }}>Want to review {tailor.name}?</h3>
-                <p style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              <div className={styles.signInPrompt}>
+                <h3>Want to review {tailor.name}?</h3>
+                <p>
                   Please sign in as a customer on the discovery home page to submit fitting ratings and reviews.
                 </p>
                 <Link href="/">
@@ -480,35 +511,37 @@ export default function TailorDetailsPage({ params }: PageProps) {
               </p>
 
               <form onSubmit={handleLeadSubmit} className={styles.form}>
-                <div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="customer-name" className={styles.formLabel}>Customer Name</label>
                   <Input
-                    label="Customer Name"
+                    id="customer-name"
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     placeholder="Enter your name"
+                    className={styles.formInput}
                   />
                 </div>
 
-                <div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="customer-mobile" className={styles.formLabel}>Mobile Phone Number</label>
                   <Input
-                    label="Mobile Phone Number"
+                    id="customer-mobile"
                     value={customerMobile}
                     onChange={e => setCustomerMobile(e.target.value)}
                     placeholder="Enter 10-digit number"
+                    className={styles.formInput}
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-ink)', marginBottom: '0.35rem' }}>
-                    Stitching Requirements
-                  </label>
+                <div className={styles.formGroup}>
+                  <label htmlFor="requirement-desc" className={styles.formLabel}>Stitching Requirements</label>
                   <textarea
+                    id="requirement-desc"
                     rows={4}
                     value={requirementDesc}
                     onChange={e => setRequirementDesc(e.target.value)}
                     placeholder="e.g. Bridal Lehenga custom stitching, Suit resizing alter, etc."
-                    className={styles.reviewTextarea}
-                    style={{ fontSize: '0.85rem', padding: '0.65rem' }}
+                    className={styles.formTextarea}
                   />
                 </div>
 
@@ -521,9 +554,10 @@ export default function TailorDetailsPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Working Hours Card */}
-          <Card className={styles.section} style={{ padding: '2rem' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '1.25rem' }}>Shop Hours</h3>
+          {/* Working Hours Card */}              <div className={styles.hoursCard}>
+            <h3 className={styles.hoursTitle}>
+              <span>🕐</span> Shop Hours
+            </h3>
             <div className={styles.hoursList}>
               {tailor.working_hours ? (
                 Object.entries(tailor.working_hours).map(([day, value]) => {
@@ -545,10 +579,10 @@ export default function TailorDetailsPage({ params }: PageProps) {
                   );
                 })
               ) : (
-                <div style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem' }}>Hours not specified</div>
+                <div className={styles.loadingText}>Hours not specified</div>
               )}
             </div>
-          </Card>
+          </div>
         </aside>
       </div>
     </div>

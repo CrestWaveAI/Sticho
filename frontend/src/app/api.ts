@@ -52,6 +52,7 @@ export interface Tailor {
   longitude?: number | null;
   whatsapp_number?: string;
   experience?: number;
+  is_verified?: boolean;
   working_hours?: Record<string, WorkingHourDay | string> | null;
   notifications_enabled?: boolean;
   notification_channel?: string;

@@ -26,6 +26,16 @@ const sourceSerif = Source_Serif_4({
 export const metadata: Metadata = {
   title: "Stichoh - Find & Book Premium Tailors Near You",
   description: "Stichoh is a premium bespoke tailoring network. Search, filter, and book custom tailors, designer boutiques, school/corporate uniforms, and precision alteration specialists near you.",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

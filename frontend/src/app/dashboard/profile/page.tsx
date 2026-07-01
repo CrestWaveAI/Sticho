@@ -238,6 +238,7 @@ export default function ProfilePage() {
         bio: formData.bio.trim(),
         address: formData.address.trim(),
         contact_number: formData.callNumber.trim(),
+        whatsapp_number: formData.whatsapp.trim(),
         location_id: matchedLocationId,
         experience: expNum,
         latitude: formData.latitude,

@@ -239,6 +239,7 @@ export default function OnboardingPage() {
         address: address.trim(),
         gradient: 'linear-gradient(135deg, #bf91ac 0%, #7d4d68 100%)',
         contact_number: callNumber.trim(),
+        whatsapp_number: whatsapp.trim(),
         location_id: matchedLocationId
       };
       

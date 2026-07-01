@@ -28,23 +28,27 @@ export default function DashboardOverview() {
     return null;
   });
 
-  const [businessName] = useState<string>(() => {
+  const [businessName, setBusinessName] = useState<string>('Partner');
+
+  const [dashboardData, setDashboardData] = useState<TailorDashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const profile = localStorage.getItem('tailor_profile');
       if (profile) {
         try {
           const parsed = JSON.parse(profile);
-          return parsed.businessName || 'Studio M';
+          const name = parsed.businessName || 'Partner';
+          setTimeout(() => {
+            setBusinessName(name);
+          }, 0);
         } catch (e) {
           console.error(e);
         }
       }
     }
-    return 'Studio M';
-  });
-
-  const [dashboardData, setDashboardData] = useState<TailorDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  }, []);
 
   // Fetch Dashboard Stats
   useEffect(() => {

@@ -90,18 +90,22 @@ export default function Home() {
   const [leadError, setLeadError] = useState("");
 
   // Customer Auth States
-  const [customerToken, setCustomerToken] = useState<string | null>(() => {
+  const [customerToken, setCustomerToken] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState<string>("");
+  
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('customer_token');
+      const token = localStorage.getItem('customer_token');
+      const name = localStorage.getItem('customer_name') || "";
+      if (token) {
+        setTimeout(() => {
+          setCustomerToken(token);
+          setCustomerName(name);
+        }, 0);
+      }
     }
-    return null;
-  });
-  const [customerName, setCustomerName] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('customer_name') || "";
-    }
-    return "";
-  });
+  }, []);
+
   const [isCustomerAuthOpen, setIsCustomerAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [authForm, setAuthForm] = useState({ name: "", email: "", password: "" });

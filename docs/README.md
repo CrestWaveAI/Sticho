@@ -46,9 +46,11 @@ This directory is used to track every change, decision, branch, and feature impl
     * Summary of SMS/WhatsApp preference settings and background alert flows for customer interactions.
 21. **[Customer Auth, Ratings & Dashboard Integration Log](file:///h:/Projects/Stichoh/docs/SCRUM-10-19-26-customer-auth-reviews-dashboard-jeelan80.md)**
     * Summary of frontend work integrating customer session login, ratings/reviews lists and submission forms, and Tailor Dashboard dynamic statistics.
-22. **[Error Monitoring & Alerts Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-39-error-monitoring-antigravity.md)**
+22. **[Error Monitoring & Alerts Log (Backend)](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-39-error-monitoring-antigravity.md)**
     * Summary of Sentry SDK backend configuration, alerts setup, and testing endpoint.
-22. **[Simulated Services & Production Hookups Guide](file:///Users/amankumar/Aman/Sticho/docs/simulated-data-and-endpoints.md)**
+23. **[Error Monitoring & Alerts Log (Frontend)](file:///h:/Projects/Stichoh/docs/SCRUM-39-sentry-error-monitoring-jeelan80.md)**
+    * Summary of Sentry SDK frontend configuration, hydration mismatch fixes, and Lead Management page hookups.
+24. **[Simulated Services & Production Hookups Guide](file:///Users/amankumar/Aman/Sticho/docs/simulated-data-and-endpoints.md)**
     * Comprehensive guide cataloging backend mocks (SMS, Google OAuth, Sentry, Cloudinary fallback) and production transition steps.
 
 

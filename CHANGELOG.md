@@ -14,9 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
 - Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}`:
   - Allowed unverified tailors to retrieve their own profiles when authenticated or via Referer-based dashboard access, preventing Settings page crashes.
+- Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
+- Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
 
 ### Added
-- Implemented `GET /api/v1/leads` backend endpoint to allow tailors to query their complete leads list from the database.
+- Hooked up Sentry Error Monitoring & Alerts Next.js SDK on the frontend, including edge/server/client configurations and a debug test page (`/sentry-test`) (`SCRUM-39` / `#50`).
+- Connected Lead Management dashboard page (`/dashboard/leads`) to the backend `GET /api/v1/leads` endpoint (`#56`).
 - Integrated Tailor Authentication by removing fake OTP system and connecting registration to `POST /api/v1/auth/register` and creating a login page (`/login`) connected to `POST /api/v1/auth/login` (`SCRUM-10`).
 - Integrated dynamic Tailor Dashboard overview page loading lead counts, WhatsApp/Call clicks stats, completeness progress bar, missing fields checklists, and recent leads list from the backend secure dashboard endpoint (`SCRUM-26`).
 - Integrated Customer Auth on the search discovery page with registration, email login, and Google OAuth modals (`SCRUM-10`).

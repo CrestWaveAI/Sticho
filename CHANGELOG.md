@@ -13,8 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`).
 - Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
 - Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
+- Fixed the Partner Profile page (`/dashboard/profile`) to read and map the tailor's WhatsApp number and phone number from the database instead of falling back to stale local storage data (`#62`).
 
 ### Added
+- Implemented a dedicated, customer-facing boutique details page `/profile/[id]` showcasing ratings, reviews, working hours, and portfolio, with lead gating on Call/WhatsApp details (`#63`).
+- Added a WhatsApp Number input field to the Account Settings page (`/dashboard/settings`) to support editing and updating the boutique's WhatsApp contact (`#61`).
 - Hooked up Sentry Error Monitoring & Alerts Next.js SDK on the frontend, including edge/server/client configurations and a debug test page (`/sentry-test`) (`SCRUM-39` / `#50`).
 - Connected Lead Management dashboard page (`/dashboard/leads`) to the backend `GET /api/v1/leads` endpoint (`#56`).
 - Integrated Tailor Authentication by removing fake OTP system and connecting registration to `POST /api/v1/auth/register` and creating a login page (`/login`) connected to `POST /api/v1/auth/login` (`SCRUM-10`).

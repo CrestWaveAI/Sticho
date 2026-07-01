@@ -20,7 +20,7 @@ export default function SettingsPage() {
     return 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
   });
   const [availability, setAvailability] = useState<'open' | 'closed' | 'unavailable'>('open');
-  const [contactInfo, setContactInfo] = useState({ email: '', phone: '' });
+  const [contactInfo, setContactInfo] = useState({ email: '', phone: '', whatsapp: '' });
   const [password, setPassword] = useState({ current: '', new: '', confirm: '' });
   const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +53,8 @@ export default function SettingsPage() {
         const detail = await fetchTailorDetail(tailorId);
         setContactInfo({
           email: detail.email || '',
-          phone: detail.contact_number || ''
+          phone: detail.contact_number || '',
+          whatsapp: detail.whatsapp_number || ''
         });
         
         if (detail.notifications_enabled !== undefined) {
@@ -107,7 +108,8 @@ export default function SettingsPage() {
     try {
       await updateTailor(tailorId, {
         email: contactInfo.email,
-        contact_number: contactInfo.phone
+        contact_number: contactInfo.phone,
+        whatsapp_number: contactInfo.whatsapp
       });
       addToast('Contact info updated successfully in the database.', 'success');
     } catch (err) {
@@ -217,6 +219,7 @@ export default function SettingsPage() {
                 <h3 className={styles.subTitle}>Contact Information</h3>
                 <Input label="Email Address" value={contactInfo.email} onChange={e => setContactInfo({...contactInfo, email: e.target.value})} />
                 <Input label="Phone Number" value={contactInfo.phone} onChange={e => setContactInfo({...contactInfo, phone: e.target.value})} />
+                <Input label="WhatsApp Number" value={contactInfo.whatsapp} onChange={e => setContactInfo({...contactInfo, whatsapp: e.target.value})} />
                 <Button variant="secondary" className={styles.updateBtn} onClick={handleUpdateContact}>Update Contact Info</Button>
               </div>
               

@@ -890,7 +890,9 @@ export default function Home() {
                       className="card-img-gradient"
                       style={{ background: tailor.gradient }}
                     >
-                      <div className="card-logo">✂</div>
+                      <Link href={`/profile/${tailor.id}`} style={{ display: 'block', width: '100%', height: '100%' }}>
+                        <div className="card-logo">✂</div>
+                      </Link>
                       <button
                         className={`bookmark-btn ${shortlistedIds.includes(tailor.id) ? "active" : ""}`}
                         onClick={(e) => {
@@ -915,74 +917,76 @@ export default function Home() {
                       </button>
                     </div>
                     <div className="card-content">
-                      <div className="card-top">
-                        <h4 className="tailor-name">{tailor.name}</h4>
-                        <div className="rating-container">
-                          <span className="star-icon">★</span>
-                          <span className="rating-num">{tailor.rating}</span>
-                          <span className="reviews-count">({tailor.reviews_count})</span>
+                      <Link href={`/profile/${tailor.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                        <div className="card-top">
+                          <h4 className="tailor-name">{tailor.name}</h4>
+                          <div className="rating-container">
+                            <span className="star-icon">★</span>
+                            <span className="rating-num">{tailor.rating}</span>
+                            <span className="reviews-count">({tailor.reviews_count})</span>
+                          </div>
                         </div>
-                      </div>
-                      <p className="location-info">
-                        {tailor.location.name}, {tailor.location.city} ({tailor.location.pin_code})
-                      </p>
-                      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem", display: "flex", gap: "0.25rem", alignItems: "center" }}>
-                        <span>🕒 Hours Today:</span>
-                        <span style={{ fontWeight: 500, color: "var(--foreground)" }}>
-                          {(() => {
-                            if (!tailor.working_hours) return "Not specified";
-                            
-                            // Get current day of week in lowercase
-                            const currentDay = new Date()
-                              .toLocaleDateString("en-US", { weekday: "long" })
-                              .toLowerCase();
+                        <p className="location-info">
+                          {tailor.location.name}, {tailor.location.city} ({tailor.location.pin_code})
+                        </p>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem", display: "flex", gap: "0.25rem", alignItems: "center" }}>
+                          <span>🕒 Hours Today:</span>
+                          <span style={{ fontWeight: 500, color: "var(--foreground)" }}>
+                            {(() => {
+                              if (!tailor.working_hours) return "Not specified";
                               
-                            const dayData = tailor.working_hours[currentDay];
-                            
-                            if (!dayData) {
-                              const daysShort = new Date().toLocaleDateString("en-US", { weekday: "short" });
-                              const legacyMatch = Object.entries(tailor.working_hours).find(([key]) => {
-                                const cleanKey = key.toLowerCase();
-                                return cleanKey.includes(daysShort.toLowerCase()) || 
-                                       (cleanKey.includes("mon") && cleanKey.includes("sat") && daysShort !== "Sun");
-                              });
-                              if (legacyMatch) {
-                                return legacyMatch[1] as string;
+                              // Get current day of week in lowercase
+                              const currentDay = new Date()
+                                .toLocaleDateString("en-US", { weekday: "long" })
+                                .toLowerCase();
+                                
+                              const dayData = tailor.working_hours[currentDay];
+                              
+                              if (!dayData) {
+                                const daysShort = new Date().toLocaleDateString("en-US", { weekday: "short" });
+                                const legacyMatch = Object.entries(tailor.working_hours).find(([key]) => {
+                                  const cleanKey = key.toLowerCase();
+                                  return cleanKey.includes(daysShort.toLowerCase()) || 
+                                         (cleanKey.includes("mon") && cleanKey.includes("sat") && daysShort !== "Sun");
+                                });
+                                if (legacyMatch) {
+                                  return legacyMatch[1] as string;
+                                }
+                                return "Not specified";
                               }
+                              
+                              if (typeof dayData === "string") {
+                                return dayData;
+                              }
+                              
+                              if (dayData.closed) {
+                                return "Closed";
+                              }
+                              
+                              if (dayData.open && dayData.close) {
+                                const formatTime12h = (timeStr: string) => {
+                                  const [hourStr, minStr] = timeStr.split(":");
+                                  const hour = parseInt(hourStr);
+                                  const suffix = hour >= 12 ? "PM" : "AM";
+                                  const hour12 = hour % 12 || 12;
+                                  return `${hour12}:${minStr} ${suffix}`;
+                                };
+                                return `${formatTime12h(dayData.open)} - ${formatTime12h(dayData.close)}`;
+                              }
+                              
                               return "Not specified";
-                            }
-                            
-                            if (typeof dayData === "string") {
-                              return dayData;
-                            }
-                            
-                            if (dayData.closed) {
-                              return "Closed";
-                            }
-                            
-                            if (dayData.open && dayData.close) {
-                              const formatTime12h = (timeStr: string) => {
-                                const [hourStr, minStr] = timeStr.split(":");
-                                const hour = parseInt(hourStr);
-                                const suffix = hour >= 12 ? "PM" : "AM";
-                                const hour12 = hour % 12 || 12;
-                                return `${hour12}:${minStr} ${suffix}`;
-                              };
-                              return `${formatTime12h(dayData.open)} - ${formatTime12h(dayData.close)}`;
-                            }
-                            
-                            return "Not specified";
-                          })()}
-                        </span>
-                      </p>
-                      <p className="description">{tailor.bio || "No description provided."}</p>
-                      <div className="tag-container">
-                        {tailor.categories.map((cat) => (
-                          <span key={cat} className="tag">
-                            {cat}
+                            })()}
                           </span>
-                        ))}
-                      </div>
+                        </p>
+                        <p className="description">{tailor.bio || "No description provided."}</p>
+                        <div className="tag-container">
+                          {tailor.categories.map((cat) => (
+                            <span key={cat} className="tag">
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                      </Link>
 
                       {isUnlocked ? (
                         <div className="unlocked-container">

@@ -91,6 +91,8 @@ export default function ProfilePage() {
             experience: tailor.experience !== undefined ? String(tailor.experience) : prev.experience,
             latitude: tailor.latitude !== undefined ? tailor.latitude : prev.latitude,
             longitude: tailor.longitude !== undefined ? tailor.longitude : prev.longitude,
+            whatsapp: tailor.whatsapp_number || prev.whatsapp,
+            callNumber: tailor.contact_number || prev.callNumber,
           }));
         }
       } catch (err) {

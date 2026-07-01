@@ -8,7 +8,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from app.core.security import verify_token
+from app.core.security import verify_token, get_current_tailor_id
 from pydantic import BaseModel
 from typing import Any
 
@@ -332,8 +332,18 @@ async def get_tailor_detail(
 
 
 @router.put("/{tailor_id}", response_model=TailorPrivateResponse)
-async def update_tailor_profile(tailor_id: uuid.UUID, tailor_update: TailorUpdate):
+async def update_tailor_profile(
+    tailor_id: uuid.UUID,
+    tailor_update: TailorUpdate,
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
     sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this tailor profile"
+        )
     update_data = tailor_update.model_dump(exclude_unset=True)
     if "location_id" in update_data and update_data["location_id"]:
         update_data["location_id"] = str(update_data["location_id"])
@@ -358,8 +368,18 @@ async def update_tailor_profile(tailor_id: uuid.UUID, tailor_update: TailorUpdat
 
 
 @router.post("/{tailor_id}/portfolio")
-async def add_portfolio_metadata(tailor_id: uuid.UUID, image_data: dict):
+async def add_portfolio_metadata(
+    tailor_id: uuid.UUID,
+    image_data: dict,
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
     sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this tailor profile"
+        )
     # 1. Check tailor exists
     tailor = sb.table("tailors").select("id").eq("id", str(tailor_id)).execute().data
     if not tailor:
@@ -390,8 +410,15 @@ async def upload_portfolio_image(
     tailor_id: uuid.UUID,
     file: UploadFile = File(...),
     caption: str | None = Form(None),
+    current_tailor_id: str = Depends(get_current_tailor_id)
 ):
     sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this tailor profile"
+        )
     # 1. Check tailor exists
     tailor = sb.table("tailors").select("id").eq("id", str(tailor_id)).execute().data
     if not tailor:
@@ -454,8 +481,18 @@ async def upload_portfolio_image(
 
 
 @router.put("/{tailor_id}/portfolio/reorder")
-async def reorder_portfolio(tailor_id: uuid.UUID, positions: list[PortfolioImagePositionUpdate]):
+async def reorder_portfolio(
+    tailor_id: uuid.UUID,
+    positions: list[PortfolioImagePositionUpdate],
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
     sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this tailor profile"
+        )
     # 1. Verify tailor exists
     tailor = sb.table("tailors").select("id").eq("id", str(tailor_id)).execute().data
     if not tailor:
@@ -469,8 +506,18 @@ async def reorder_portfolio(tailor_id: uuid.UUID, positions: list[PortfolioImage
 
 
 @router.delete("/{tailor_id}/portfolio/{image_id}")
-async def delete_portfolio_image(tailor_id: uuid.UUID, image_id: uuid.UUID):
+async def delete_portfolio_image(
+    tailor_id: uuid.UUID,
+    image_id: uuid.UUID,
+    current_tailor_id: str = Depends(get_current_tailor_id)
+):
     sb = get_supabase()
+    tailor_id_str = str(tailor_id)
+    if tailor_id_str.replace("-", "") != current_tailor_id.replace("-", ""):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to modify this tailor profile"
+        )
     # 1. Get image metadata
     img_data = sb.table("portfolio_images").select("*").eq("id", str(image_id)).eq("tailor_id", str(tailor_id)).execute().data
     if not img_data:
@@ -491,7 +538,6 @@ async def delete_portfolio_image(tailor_id: uuid.UUID, image_id: uuid.UUID):
     sb.table("portfolio_images").delete().eq("id", str(image_id)).eq("tailor_id", str(tailor_id)).execute()
     return {"message": "Portfolio image deleted successfully."}
 
-from app.core.security import get_current_tailor_id
 from pydantic import Field
 
 class ClickTrackingRequest(BaseModel):

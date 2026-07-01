@@ -462,6 +462,9 @@ async def run_tests():
     # Create Async HTTP Client
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        from app.core.security import create_token
+        test_token = create_token({"tailor_id": str(test_tailor_id)})
+        test_headers = {"Authorization": f"Bearer {test_token}"}
         
         # Test 1: GET /api/v1/tailors (no filter)
         print("\nTest 1: Search tailors without filters")
@@ -566,7 +569,7 @@ async def run_tests():
             "name": "Signature Boutique",
             "bio": "Updated premium boutique bio"
         }
-        response = await client.put(f"/api/v1/tailors/{test_tailor_id}", json=profile_update)
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}", json=profile_update, headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         updated_tailor = response.json()
         assert updated_tailor["name"] == "Signature Boutique"
@@ -584,7 +587,7 @@ async def run_tests():
             "time_estimate_days": 4,
             "description": "Premium Custom Suit Stitching"
         }
-        response = await client.post("/api/v1/services", json=new_service_payload)
+        response = await client.post("/api/v1/services", json=new_service_payload, headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         service_data = response.json()
         new_service_id = service_data["id"]
@@ -597,7 +600,7 @@ async def run_tests():
             "time_estimate_days": 5,
             "description": "Updated Suit Stitching description"
         }
-        response = await client.put(f"/api/v1/services/{new_service_id}", json=service_update_payload)
+        response = await client.put(f"/api/v1/services/{new_service_id}", json=service_update_payload, headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         assert response.json()["price_estimate"] == "400.00"
         print("  - Service updated successfully.")
@@ -609,7 +612,7 @@ async def run_tests():
         print("  - List services for tailor boutique verified.")
 
         # Delete
-        response = await client.delete(f"/api/v1/services/{new_service_id}")
+        response = await client.delete(f"/api/v1/services/{new_service_id}", headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         print("  - Service deleted successfully.")
         print("Test 7 Passed!")
@@ -622,7 +625,7 @@ async def run_tests():
             "caption": "Test Design 1",
             "position": 0
         }
-        response = await client.post(f"/api/v1/tailors/{test_tailor_id}/portfolio", json=metadata_payload)
+        response = await client.post(f"/api/v1/tailors/{test_tailor_id}/portfolio", json=metadata_payload, headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         img1 = response.json()
         img1_id = img1["id"]
@@ -632,7 +635,8 @@ async def run_tests():
         # Multipart upload validation: invalid file type
         response = await client.post(
             f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
-            files={"file": ("test.txt", b"dummy file content", "text/plain")}
+            files={"file": ("test.txt", b"dummy file content", "text/plain")},
+            headers=test_headers
         )
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
         assert "Unsupported file type" in response.json()["detail"]
@@ -642,7 +646,8 @@ async def run_tests():
         large_content = b"x" * (6 * 1024 * 1024) # 6MB
         response = await client.post(
             f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
-            files={"file": ("large.jpg", large_content, "image/jpeg")}
+            files={"file": ("large.jpg", large_content, "image/jpeg")},
+            headers=test_headers
         )
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
         assert "File size exceeds" in response.json()["detail"]
@@ -652,7 +657,8 @@ async def run_tests():
         response = await client.post(
             f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
             files={"file": ("design2.jpg", b"fake jpeg content", "image/jpeg")},
-            data={"caption": "Test Design 2"}
+            data={"caption": "Test Design 2"},
+            headers=test_headers
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         img2 = response.json()
@@ -666,7 +672,7 @@ async def run_tests():
             {"id": img1_id, "position": 2},
             {"id": img2_id, "position": 1}
         ]
-        response = await client.put(f"/api/v1/tailors/{test_tailor_id}/portfolio/reorder", json=reorder_payload)
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}/portfolio/reorder", json=reorder_payload, headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         print("  - Portfolio bulk reordering verified.")
 
@@ -675,12 +681,14 @@ async def run_tests():
         for i in range(18):
             await client.post(
                 f"/api/v1/tailors/{test_tailor_id}/portfolio",
-                json={"image_url": f"https://cloudinary.com/test_{i}.jpg", "caption": f"Design {i}", "position": i + 3}
+                json={"image_url": f"https://cloudinary.com/test_{i}.jpg", "caption": f"Design {i}", "position": i + 3},
+                headers=test_headers
             )
         # Attempt to add the 21st image
         response = await client.post(
             f"/api/v1/tailors/{test_tailor_id}/portfolio",
-            json={"image_url": "https://cloudinary.com/test_21.jpg", "caption": "Should fail", "position": 21}
+            json={"image_url": "https://cloudinary.com/test_21.jpg", "caption": "Should fail", "position": 21},
+            headers=test_headers
         )
         assert response.status_code == 400, f"Expected 400, got {response.status_code}"
         assert "limit of 20" in response.json()["detail"]
@@ -688,7 +696,7 @@ async def run_tests():
 
         # Cleanup: delete images
         # Delete first
-        response = await client.delete(f"/api/v1/tailors/{test_tailor_id}/portfolio/{img1_id}")
+        response = await client.delete(f"/api/v1/tailors/{test_tailor_id}/portfolio/{img1_id}", headers=test_headers)
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         print("  - Portfolio image deletion verified.")
         print("Test 8 Passed!")
@@ -1070,6 +1078,53 @@ async def run_tests():
         assert leads_list[0]["customer_name"] == "Test Customer"
         print("  - Leads list retrieved successfully and gated correctly.")
         print("Test 19 Passed!")
+
+        # Test 20: Run Backend Mutation Authentication & Authorization Checks
+        print("\nTest 20: Run Backend Mutation Authentication & Authorization Checks")
+        
+        # 1. Unauthenticated profile update -> 401
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}", json={"name": "Attacker"})
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        
+        # 2. Unauthorized profile update (using invalid/another tailor's token) -> 403
+        wrong_token = create_token({"tailor_id": str(uuid.uuid4())})
+        wrong_headers = {"Authorization": f"Bearer {wrong_token}"}
+        response = await client.put(f"/api/v1/tailors/{test_tailor_id}", json={"name": "Attacker"}, headers=wrong_headers)
+        assert response.status_code == 403, f"Expected 403, got {response.status_code}"
+        
+        # 3. Unauthenticated service create -> 401
+        response = await client.post("/api/v1/services", json={
+            "tailor_id": str(test_tailor_id),
+            "category_id": str(cat.id),
+            "price_estimate": "100.00"
+        })
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        
+        # 4. Unauthorized service create -> 403
+        response = await client.post("/api/v1/services", json={
+            "tailor_id": str(test_tailor_id),
+            "category_id": str(cat.id),
+            "price_estimate": "100.00"
+        }, headers=wrong_headers)
+        assert response.status_code == 403, f"Expected 403, got {response.status_code}"
+        
+        # 5. Unauthenticated portfolio upload -> 401
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
+            files={"file": ("design2.jpg", b"fake jpeg content", "image/jpeg")}
+        )
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+        
+        # 6. Unauthorized portfolio upload -> 403
+        response = await client.post(
+            f"/api/v1/tailors/{test_tailor_id}/portfolio/upload",
+            files={"file": ("design2.jpg", b"fake jpeg content", "image/jpeg")},
+            headers=wrong_headers
+        )
+        assert response.status_code == 403, f"Expected 403, got {response.status_code}"
+        
+        print("  - Authentication and authorization checks for mutation endpoints verified successfully.")
+        print("Test 20 Passed!")
 
 
 

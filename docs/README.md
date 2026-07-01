@@ -54,6 +54,8 @@ This directory is used to track every change, decision, branch, and feature impl
     * Comprehensive guide cataloging backend mocks (SMS, Google OAuth, Sentry, Cloudinary fallback) and production transition steps.
 25. **[Secure Profile, Service, and Portfolio mutations Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-41-secure-mutations-antigravity.md)**
     * Summary of securing backend mutations with JWT authentication and ownership validation.
+26. **[Tailor Details Page & Sync Log (Frontend)](file:///h:/Projects/Stichoh/docs/SCRUM-26-tailor-details-page-jeelan80.md)**
+    * Summary of customer-facing boutique details page creation, settings WhatsApp number addition, and profile sync fixes.
 
 
 

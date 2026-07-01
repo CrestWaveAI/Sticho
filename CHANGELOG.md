@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Secured mutating API endpoints (PUT profile, portfolio upload/reorder/delete, and services CRUD) with JWT Bearer token authentication validation checks and ownership validation (`SCRUM-41`).
+
 ### Fixed
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`):
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".

@@ -151,6 +151,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-07-01:** Refactored `GET /api/v1/tailors/{tailor_id}` response mapping to dynamically return `TailorPrivateResponse` (including `contact_number` and `whatsapp_number`) for authorized owner/dashboard views using `JSONResponse` and `jsonable_encoder`, resolving empty contact fields in settings.
 * **2026-07-01:** Resolved service creation failure by refactoring `backend/app/api/v1/endpoints/services.py` to use the Supabase REST Client instead of SQLAlchemy (direct PG pooler connections on port 6543 are blocked in the developer's environment, whereas REST HTTPS port 443 remains open).
 * **2026-07-01:** Resolved frontend crash `Cannot read properties of null (reading 'name')` on homepage mapping of tailors with no locations by adding a valid fallback Location object with a nil UUID (`00000000-0000-0000-0000-000000000000`) in `_row_to_public`.
 * **2026-06-30:** Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}` endpoint. Previously, unverified tailors were blocked with a 404, causing their private settings page (`/dashboard/settings`) to crash. Added token-based authorization and Referer header checking to allow tailors to query their own profiles even if unverified.

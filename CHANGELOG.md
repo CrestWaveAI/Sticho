@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
 - Resolved service creation failure by refactoring `backend/app/api/v1/endpoints/services.py` to use the Supabase REST Client instead of SQLAlchemy (direct PG pooler connections on port 6543 are blocked in the developer's environment, whereas REST HTTPS port 443 remains open).
 - Resolved frontend crash `Cannot read properties of null (reading 'name')` on homepage mapping of tailors with no locations by adding a valid fallback Location object with a nil UUID (`00000000-0000-0000-0000-000000000000`) in `_row_to_public`.
+- Fixed phone and WhatsApp numbers display on settings/profile pages by returning `TailorPrivateResponse` dynamically for authorized requests on `GET /api/v1/tailors/{tailor_id}` instead of stripping them in `TailorDetailResponse`.
 
 ### Added
 - Hooked up Sentry Error Monitoring & Alerts Next.js SDK on the frontend, including edge/server/client configurations and a debug test page (`/sentry-test`) (`SCRUM-39` / `#50`).

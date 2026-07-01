@@ -6,6 +6,8 @@ import uuid
 import os
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks, Request, Header
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from app.core.security import verify_token
 from pydantic import BaseModel
 from typing import Any
@@ -316,7 +318,17 @@ async def get_tailor_detail(
     from app.services.notification import NotificationService
     background_tasks.add_task(NotificationService.notify_event, data[0], "profile_view")
     
-    return _row_to_detail(data[0])
+    detail_dict = _row_to_detail(data[0])
+    
+    if is_authorized:
+        private_data = {
+            **detail_dict,
+            "contact_number": data[0].get("contact_number", ""),
+            "whatsapp_number": data[0].get("whatsapp_number")
+        }
+        return JSONResponse(content=jsonable_encoder(TailorPrivateResponse(**private_data)))
+        
+    return JSONResponse(content=jsonable_encoder(TailorDetailResponse(**detail_dict)))
 
 
 @router.put("/{tailor_id}", response_model=TailorPrivateResponse)

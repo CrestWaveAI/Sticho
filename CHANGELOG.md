@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
 - Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}`:
   - Allowed unverified tailors to retrieve their own profiles when authenticated or via Referer-based dashboard access, preventing Settings page crashes.
+- Resolved service creation failure by refactoring `backend/app/api/v1/endpoints/services.py` to use the Supabase REST Client instead of SQLAlchemy (direct PG pooler connections on port 6543 are blocked in the developer's environment, whereas REST HTTPS port 443 remains open).
+- Resolved frontend crash `Cannot read properties of null (reading 'name')` on homepage mapping of tailors with no locations by adding a valid fallback Location object with a nil UUID (`00000000-0000-0000-0000-000000000000`) in `_row_to_public`.
 
 ### Added
 - Implemented `GET /api/v1/leads` backend endpoint to allow tailors to query their complete leads list from the database.

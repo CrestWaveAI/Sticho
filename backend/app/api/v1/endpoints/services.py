@@ -1,93 +1,123 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
-from app.core.db import get_db
-from app.models.service import Service
-from app.models.tailor import Tailor
+from fastapi import APIRouter, HTTPException, status
+from app.core.supabase_client import get_supabase
 from app.schemas.service import ServiceCreate, ServiceResponse, ServiceDetailResponse, ServiceBase
 
 router = APIRouter()
 
 @router.post("", response_model=ServiceResponse)
-async def create_service(
-    service_in: ServiceCreate,
-    db: AsyncSession = Depends(get_db),
-):
-    # Verify tailor exists
-    tailor_query = select(Tailor).where(Tailor.id == service_in.tailor_id)
-    tailor_result = await db.execute(tailor_query)
-    if not tailor_result.scalar_one_or_none():
+async def create_service(service_in: ServiceCreate):
+    """
+    Create a new service listing for a tailor boutique.
+    """
+    sb = get_supabase()
+    
+    # 1. Verify tailor exists
+    tailor_exists = sb.table("tailors").select("id").eq("id", str(service_in.tailor_id)).execute().data
+    if not tailor_exists:
         raise HTTPException(status_code=404, detail="Tailor not found")
-
-    db_service = Service(
-        id=uuid.uuid4(),
-        tailor_id=service_in.tailor_id,
-        category_id=service_in.category_id,
-        price_estimate=service_in.price_estimate,
-        time_estimate_days=service_in.time_estimate_days,
-        description=service_in.description,
-        created_at=datetime.utcnow()
-    )
-    db.add(db_service)
-    await db.flush()
-    return db_service
+        
+    # 2. Insert service
+    service_id = str(uuid.uuid4())
+    new_service = {
+        "id": service_id,
+        "tailor_id": str(service_in.tailor_id),
+        "category_id": str(service_in.category_id),
+        "price_estimate": str(service_in.price_estimate) if service_in.price_estimate is not None else None,
+        "time_estimate_days": service_in.time_estimate_days,
+        "description": service_in.description,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    result = sb.table("services").insert(new_service).execute().data
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create service")
+        
+    return result[0]
 
 
 @router.put("/{service_id}", response_model=ServiceResponse)
-async def update_service(
-    service_id: uuid.UUID,
-    service_update: ServiceBase,
-    db: AsyncSession = Depends(get_db),
-):
-    query = select(Service).where(Service.id == service_id)
-    result = await db.execute(query)
-    service = result.scalar_one_or_none()
-    if not service:
+async def update_service(service_id: uuid.UUID, service_update: ServiceBase):
+    """
+    Edit service estimates/description.
+    """
+    sb = get_supabase()
+    
+    # 1. Check if service exists
+    existing = sb.table("services").select("*").eq("id", str(service_id)).execute().data
+    if not existing:
         raise HTTPException(status_code=404, detail="Service not found")
-
+        
+    # 2. Update service
     update_data = service_update.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(service, key, value)
-
-    db.add(service)
-    await db.flush()
-    return service
+    if "category_id" in update_data and update_data["category_id"]:
+        update_data["category_id"] = str(update_data["category_id"])
+    if "price_estimate" in update_data and update_data["price_estimate"] is not None:
+        update_data["price_estimate"] = str(update_data["price_estimate"])
+        
+    result = sb.table("services").update(update_data).eq("id", str(service_id)).execute().data
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to update service")
+        
+    return result[0]
 
 
 @router.delete("/{service_id}")
-async def delete_service(
-    service_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-):
-    query = select(Service).where(Service.id == service_id)
-    result = await db.execute(query)
-    service = result.scalar_one_or_none()
-    if not service:
+async def delete_service(service_id: uuid.UUID):
+    """
+    Delete a service listing.
+    """
+    sb = get_supabase()
+    
+    # 1. Check if service exists
+    existing = sb.table("services").select("id").eq("id", str(service_id)).execute().data
+    if not existing:
         raise HTTPException(status_code=404, detail="Service not found")
-
-    await db.delete(service)
-    await db.flush()
+        
+    # 2. Delete service
+    sb.table("services").delete().eq("id", str(service_id)).execute()
     return {"message": "Service deleted successfully."}
 
 
 @router.get("/tailor/{tailor_id}", response_model=list[ServiceDetailResponse])
-async def get_tailor_services(
-    tailor_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-):
-    # Verify tailor exists
-    tailor_query = select(Tailor).where(Tailor.id == tailor_id)
-    tailor_result = await db.execute(tailor_query)
-    if not tailor_result.scalar_one_or_none():
+async def get_tailor_services(tailor_id: uuid.UUID):
+    """
+    Retrieve all services for a specific tailor boutique.
+    """
+    sb = get_supabase()
+    
+    # 1. Verify tailor exists
+    tailor_exists = sb.table("tailors").select("id").eq("id", str(tailor_id)).execute().data
+    if not tailor_exists:
         raise HTTPException(status_code=404, detail="Tailor not found")
-
-    query = select(Service).where(Service.tailor_id == tailor_id).options(
-        selectinload(Service.category)
+        
+    # 2. Fetch services with categories
+    result = (
+        sb.table("services")
+        .select("*, categories(*)")
+        .eq("tailor_id", str(tailor_id))
+        .execute()
+        .data
     )
-    result = await db.execute(query)
-    services = result.scalars().all()
+    
+    services = []
+    for row in result:
+        category = row.get("categories") or {}
+        services.append({
+            "id": row["id"],
+            "tailor_id": row["tailor_id"],
+            "category_id": row["category_id"],
+            "price_estimate": row.get("price_estimate"),
+            "time_estimate_days": row.get("time_estimate_days"),
+            "description": row.get("description"),
+            "created_at": row.get("created_at") or datetime.utcnow().isoformat(),
+            "category": {
+                "id": category.get("id"),
+                "name": category.get("name"),
+                "description": category.get("description"),
+                "created_at": category.get("created_at") or datetime.utcnow().isoformat()
+            } if category else None
+        })
+        
     return services

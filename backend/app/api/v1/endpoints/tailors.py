@@ -35,7 +35,15 @@ router = APIRouter()
 
 def _row_to_public(row: dict) -> dict:
     """Map a flat Supabase REST row (with nested location/services) to TailorPublicResponse shape."""
-    location = row.get("locations") or {}
+    location = row.get("locations")
+    if not location:
+        location = {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "N/A",
+            "city": "N/A",
+            "pin_code": "",
+            "created_at": datetime.utcnow().isoformat()
+        }
     services = row.get("services") or []
     return {
         "id": row["id"],
@@ -58,7 +66,7 @@ def _row_to_public(row: dict) -> dict:
             "city": location.get("city"),
             "pin_code": location.get("pin_code"),
             "created_at": location.get("created_at") or datetime.utcnow().isoformat(),
-        } if location else None,
+        },
         "services": [
             {
                 "id": s["id"],

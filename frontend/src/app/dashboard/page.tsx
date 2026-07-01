@@ -16,9 +16,9 @@ export default function DashboardOverview() {
   
   const [tailorId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
+      return localStorage.getItem('tailor_profile_id') || 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e';
     }
-    return 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
+    return 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e';
   });
   
   const [tailorToken] = useState<string | null>(() => {

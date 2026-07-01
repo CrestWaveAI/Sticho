@@ -30,8 +30,8 @@ export default function PortfolioPage() {
   const { addToast } = useToast();
 
   const tailorProfileId = typeof window !== 'undefined' 
-    ? localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b'
-    : 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
+    ? localStorage.getItem('tailor_profile_id') || 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e'
+    : 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e';
 
   // Load portfolio images on mount
   useEffect(() => {

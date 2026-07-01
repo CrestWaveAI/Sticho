@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadData() {
-      const id = localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b';
+      const id = localStorage.getItem('tailor_profile_id') || 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e';
       try {
         // Fetch all categories from backend
         const cats = await fetchCategories();
@@ -215,7 +215,7 @@ export default function ProfilePage() {
 
     setIsSaving(true);
     try {
-      const tailorId = localStorage.getItem('tailor_profile_id') || 'd5be0b0e-1f4b-4864-9a69-46ef58eef48b'; // Fallback to Indiranagar dummy tailor if none exists
+      const tailorId = localStorage.getItem('tailor_profile_id') || 'e6ae71c7-c5be-43a9-a9a3-a7d0cb74431e'; // Fallback to Indiranagar dummy tailor if none exists
 
       // 1. Resolve location ID
       let matchedLocationId: string | null = null;

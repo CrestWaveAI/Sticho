@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Upgraded password hashing from static-salt PBKDF2 to `bcrypt` with per-password dynamic salts — eliminates rainbow table vulnerability (`SCRUM-42`).
+- Loaded `SECRET_KEY` JWT signing key from environment variables instead of hardcoded source string (`SCRUM-42`).
+- Removed spoofable `Referer` header bypass from `GET /api/v1/tailors/{tailor_id}` — access to unverified profiles now requires a valid `Authorization: Bearer` token (`SCRUM-42`).
+
 ### Fixed
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`):
   - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
 - Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}`:
-  - Allowed unverified tailors to retrieve their own profiles when authenticated or via Referer-based dashboard access, preventing Settings page crashes.
+  - Allowed unverified tailors to retrieve their own profiles when authenticated with a valid Bearer token, preventing Settings page crashes (Referer-based access has been removed as a security fix in SCRUM-42).
 - Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
 - Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
 - Resolved service creation failure by refactoring `backend/app/api/v1/endpoints/services.py` to use the Supabase REST Client instead of SQLAlchemy (direct PG pooler connections on port 6543 are blocked in the developer's environment, whereas REST HTTPS port 443 remains open).

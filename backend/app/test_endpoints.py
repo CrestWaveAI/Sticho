@@ -520,17 +520,17 @@ async def run_tests():
         response = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}")
         assert response.status_code == 404, f"Expected 404 for unverified tailor, got {response.status_code}"
         
-        # Test 4b-2: Get tailor detail view for unverified tailor via referer (should succeed)
+        # Test 4b-2: Referer header alone must NOT grant access (was spoofable - now fixed)
         response_ref = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}", headers={"Referer": "http://localhost:3000/dashboard/settings"})
-        assert response_ref.status_code == 200, f"Expected 200 via referer, got {response_ref.status_code}"
+        assert response_ref.status_code == 404, f"Security check: Expected 404 when using Referer without token (referer bypass removed), got {response_ref.status_code}"
         
-        # Test 4b-3: Get tailor detail view for unverified tailor via token (should succeed)
+        # Test 4b-3: Get tailor detail view for unverified tailor via valid Bearer token (should succeed)
         from app.core.security import create_token
         unverified_token = create_token({"tailor_id": str(test_unverified_tailor_id)})
         response_tok = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}", headers={"Authorization": f"Bearer {unverified_token}"})
         assert response_tok.status_code == 200, f"Expected 200 via token, got {response_tok.status_code}"
         
-        print("  - Unverified tailor is blocked (404 Not Found) for public, but allowed for owner/dashboard.")
+        print("  - Unverified tailor is blocked (404) for public & bare Referer, but allowed with valid Bearer token.")
 
         # Test 4c: Get tailor detail view for non-existent tailor (should fail with 404)
         fake_id = uuid.uuid4()

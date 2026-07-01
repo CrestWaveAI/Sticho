@@ -52,7 +52,10 @@ This directory is used to track every change, decision, branch, and feature impl
     * Summary of Sentry SDK frontend configuration, hydration mismatch fixes, and Lead Management page hookups.
 24. **[Simulated Services & Production Hookups Guide](file:///Users/amankumar/Aman/Sticho/docs/simulated-data-and-endpoints.md)**
     * Comprehensive guide cataloging backend mocks (SMS, Google OAuth, Sentry, Cloudinary fallback) and production transition steps.
-
+25. **[Secure Profile, Service & Portfolio Mutations Log](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-41-secure-mutations-antigravity.md)**
+    * Summary of securing backend mutations with JWT authentication and tailor ownership validation (SCRUM-41).
+26. **[Security Hardening: bcrypt, SECRET_KEY & Referer Bypass Removal](file:///Users/amankumar/Aman/Sticho/docs/SCRUM-42-security-hardening-antigravity.md)**
+    * Upgrade password hashing to bcrypt with dynamic salts, load SECRET_KEY from environment, and remove the spoofable Referer auth bypass (SCRUM-42).
 
 
 ---

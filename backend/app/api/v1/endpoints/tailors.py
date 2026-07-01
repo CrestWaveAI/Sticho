@@ -5,7 +5,7 @@ direct asyncpg connection, which avoids pooler auth issues.
 import uuid
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks, Request, Header
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Form, Depends, BackgroundTasks, Header
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from app.core.security import verify_token
@@ -283,24 +283,19 @@ async def create_tailor(tailor_in: TailorCreate):
 async def get_tailor_detail(
     tailor_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    request: Request,
     authorization: str | None = Header(None)
 ):
     sb = get_supabase()
     
-    # Allow fetching the profile details of unverified tailors if:
-    # 1. The request is authorized and matches the target tailor_id
-    # 2. Or the request referer indicates it is initiated from the partner dashboard
+    # Allow fetching the profile details of unverified tailors only if the request
+    # carries a valid Bearer token that matches the target tailor_id.
+    # The Referer header is NOT used as it is trivially spoofable.
     is_authorized = False
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
         payload = verify_token(token)
         if payload and payload.get("tailor_id") == str(tailor_id):
             is_authorized = True
-            
-    referer = request.headers.get("referer", "")
-    if "/dashboard" in referer:
-        is_authorized = True
         
     query = (
         sb.table("tailors")

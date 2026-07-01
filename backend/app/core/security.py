@@ -3,22 +3,27 @@ import hashlib
 import json
 import base64
 import time
+import os
+import bcrypt
 
-SECRET_KEY = "super-secret-key-change-in-production"
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-change-in-production")
 
 def hash_password(password: str) -> str:
     """
-    Generate a secure password hash using PBKDF2-HMAC-SHA256 from Python standard library.
+    Generate a secure password hash using bcrypt.
     """
-    salt = b"sticho-salt-secure"
-    dk = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000)
-    return dk.hex()
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 def verify_password(password: str, hashed: str) -> bool:
     """
     Verify a password against its hash.
     """
-    return hash_password(password) == hashed
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
 
 def create_token(payload: dict) -> str:
     """

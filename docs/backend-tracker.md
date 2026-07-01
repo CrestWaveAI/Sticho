@@ -27,6 +27,7 @@ List of packages added via `uv add`:
 | `python-multipart` | Parser for multipart form-data (needed for File uploads) | 2026-06-24 | Profile/Portfolio CRUD |
 | `supabase` | Python client for Supabase REST (PostgREST) API | 2026-06-25 | SCRUM-11 / DB Connection |
 | `cloudinary` | Cloudinary Python SDK for image/video upload and transformation CDN integration | 2026-06-29 | SCRUM-22 |
+| `bcrypt` | Secure adaptive password hashing with per-password random salts | 2026-07-01 | SCRUM-42 |
 
 ---
 
@@ -44,6 +45,7 @@ Track variables that must be added to `.env` to prevent broken local setups:
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary Account Cloud Name | 2026-06-29 | Yes (Production) |
 | `CLOUDINARY_API_KEY` | Cloudinary API Key credential | 2026-06-29 | Yes (Production) |
 | `CLOUDINARY_API_SECRET` | Cloudinary API Secret credential | 2026-06-29 | Yes (Production) |
+| `SECRET_KEY` | HMAC signing key for JWT session tokens | 2026-07-01 | Yes (Production) |
 
 ---
 
@@ -146,6 +148,9 @@ Logs security enhancements, fixes, or vulnerability patches:
 | Incident / Enhancement | Description | Fixed On | Details / CVE Reference |
 |---|---|---|---|
 | RLS Disabled Alert | Supabase Row Level Security is currently disabled on all 6 public schema tables. This allows anonymous API read/write access. Needs configuration before staging/production launch. | 2026-06-23 | Supabase Advisory |
+| Static Salt Hash | Password hashing used a hardcoded salt `b"sticho-salt-secure"` causing identical passwords to produce identical hashes (rainbow table vulnerable). Upgraded to `bcrypt` with dynamic salts. | 2026-07-01 | SCRUM-42 |
+| Hardcoded SECRET_KEY | JWT signing key was a string literal in source code. Now loaded from `SECRET_KEY` environment variable. | 2026-07-01 | SCRUM-42 |
+| Spoofable Referer Bypass | `GET /api/v1/tailors/{tailor_id}` allowed anyone to spoof the `Referer` header to access unverified profiles without authentication. Removed — Bearer token required. | 2026-07-01 | SCRUM-42 |
 
 ---
 
@@ -158,6 +163,8 @@ Chronological record of backend modifications:
 * **2026-06-30:** Implemented `GET /api/v1/leads` endpoint allowing tailors to retrieve a list of all customer leads submitted to them. Gated with JWT bearer authentication, mapped `LeadResponse` schema, and added Test 19 verifying endpoint retrieval.
 * **2026-06-30:** Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors`. Under the new email signup system (`SCRUM-20`), a record is inserted during `/register`. During onboarding, the frontend calls `createTailor` (POST). Refactored `create_tailor` to detect if the email is already registered with a signed-up account and enrich/update the profile instead of throwing "Email already registered".
 * **2026-06-30:** Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`). Configured environment variable `SENTRY_DSN` in configurations, initialized Sentry with FastApiIntegration and send_default_pii=True in `app/main.py` conditionally, created a `GET /sentry-debug` endpoint to test exception captures, and added Test 18 verifying Sentry setup.
+* **2026-07-01:** Upgraded password hashing from static-salt PBKDF2 to bcrypt (`SCRUM-42`). Added `SECRET_KEY` environment variable loading. Removed Referer-based auth bypass from `GET /api/v1/tailors/{tailor_id}` — access for unverified tailors now requires a valid JWT Bearer token matching the requested `tailor_id`. Updated Test 4b-2 to confirm the Referer bypass is closed.
+* **2026-07-01:** Secured mutating endpoints (profile updates, services CRUD, and portfolio operations) with JWT authorization validation checks using `Depends(get_current_tailor_id)` and verified ownership permissions (SCRUM-41). Updated test suites with Test 20.
 * **2026-06-29:** Implemented tailor profile working hours validation schema (`SCRUM-24`) and background lead notifications preferences and delivery simulation service (`SCRUM-27`). Updated `Tailor` SQLAlchemy ORM models with server defaults for `notifications_enabled` and `notification_channel` columns, updated validation schemas to enforce strict formatting for daily opening/closing times via Pydantic `WorkingHourDay`, built an asynchronous `NotificationService` simulating alerts to `docs/mock_notifications.log`, and integrated `BackgroundTasks` across profile views, click tracks, and lead capture submissions. Added Test 17 to integration tests checking the full settings update and event tracking logs.
 * **2026-06-29:** Configured Cloudinary CDN for portfolio image uploads under task `SCRUM-22`. Added `cloudinary` dependency, configured `.env` and `.env.example` placeholder variables, and refactored the backend endpoint `POST /api/v1/tailors/{tailor_id}/portfolio/upload` to upload incoming assets directly to Cloudinary. Implemented local filesystem fallback for offline/test environments to ensure all integration tests continue passing.
 * **2026-06-28:** Implemented Customer Auth (SCRUM-10), Ratings & Reviews (SCRUM-19), and Tailor Profile Dashboard (SCRUM-26). Created `Customer` and `Review` ORM models and schemas. Created customer auth endpoints (register, login, Google OAuth). Created reviews endpoints (submit with duplicate reviews blocking, list reviews by tailor, and auto-aggregate tailor ratings). Updated the `Tailor` model/database with `whatsapp_clicks` and `call_clicks` columns, created click tracking endpoints, and built a secure tailor dashboard statistics endpoint. Updated the SQLite mock PostgREST client and test suites, adding Tests 14, 15, and 16.

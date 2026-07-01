@@ -927,7 +927,7 @@ export default function Home() {
                           </div>
                         </div>
                         <p className="location-info">
-                          {tailor.location.name}, {tailor.location.city} ({tailor.location.pin_code})
+                          {tailor.location ? `${tailor.location.name}, ${tailor.location.city} (${tailor.location.pin_code})` : 'Location not specified'}
                         </p>
                         <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem", display: "flex", gap: "0.25rem", alignItems: "center" }}>
                           <span>🕒 Hours Today:</span>

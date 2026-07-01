@@ -261,7 +261,7 @@ export default function TailorDetailsPage({ params }: PageProps) {
                 </div>
               </div>
               <p className={styles.subtitle}>
-                {tailor.location.name}, {tailor.location.city} ({tailor.location.pin_code})
+                {tailor.location ? `${tailor.location.name}, ${tailor.location.city} (${tailor.location.pin_code})` : 'Location not specified'}
               </p>
 
               <div className={styles.metadataGrid}>

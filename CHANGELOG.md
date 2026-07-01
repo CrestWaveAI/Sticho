@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`).
 - Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
 - Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
+- Fixed a runtime TypeError on the homepage and tailor details page when a tailor profile has no associated location database record.
 - Fixed the Partner Profile page (`/dashboard/profile`) to read and map the tailor's WhatsApp number and phone number from the database instead of falling back to stale local storage data (`#62`).
 
 ### Added

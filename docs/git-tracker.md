@@ -11,7 +11,7 @@ This document logs git branches, commit logs, pull requests, and how they map to
 | `feature/backend-customer-auth-reviews-dashboard-SCRUM-10-19-26` | `develop` | Implement customer registration & login, ratings/reviews, and tailor dashboard | Antigravity | Active (Tests Pass) |
 | `feature/frontend-portfolio-upload-SCRUM-22` | `develop` | Upload portfolio images with dynamic dashboard UI, constraints, and backend Cloudinary CDN support | Jeelan / Antigravity | Active (Lint, Build, & Tests Pass) |
 | `feature/frontend-settings-SCRUM-24-SCRUM-27` | `develop` | Hook up working hours and SMS/WhatsApp notification alert preferences | Jeelan / Antigravity | Active (Lint & Build Pass) |
-| `feature/frontend-integration-SCRUM-10-19-26` | `develop` | Hook up Customer Auth, Reviews, Tailor Dashboard, Leads Management, Sentry Error Monitoring, Hydration Fixes, Tailor Details Page, Profile Sync Fix, and Settings WhatsApp Field | Jeelan / Antigravity | Active (Lint & Build Pass) |
+| `feature/frontend-integration-SCRUM-10-19-26` | `develop` | Hook up Customer Auth, Reviews, Tailor Dashboard, Leads Management, Sentry Error Monitoring, Hydration Fixes, Tailor Details Page, Profile Sync Fix, Settings WhatsApp Field, and Location Null Fix | Jeelan / Antigravity | Active (Lint & Build Pass) |
 
 
 ---

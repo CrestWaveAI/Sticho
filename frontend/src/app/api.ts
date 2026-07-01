@@ -450,3 +450,19 @@ export async function trackClick(
   }
   return res.json();
 }
+
+export async function fetchLeads(
+  tailorId: string,
+  token: string
+): Promise<DashboardLead[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/leads?tailor_id=${tailorId}`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to fetch leads");
+  }
+  return res.json();
+}

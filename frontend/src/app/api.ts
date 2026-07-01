@@ -143,6 +143,7 @@ export async function createTailor(payload: {
   address: string;
   gradient?: string;
   contact_number: string;
+  whatsapp_number?: string;
   location_id?: string | null;
 }): Promise<Tailor> {
   const res = await fetch(`${API_BASE_URL}/api/v1/tailors`, {
@@ -166,6 +167,7 @@ export async function updateTailor(id: string, payload: {
   address?: string;
   gradient?: string;
   contact_number?: string;
+  whatsapp_number?: string;
   location_id?: string | null;
   experience?: number;
   latitude?: number | null;

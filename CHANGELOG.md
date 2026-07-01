@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`).
 - Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
+- Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
 
 ### Added
 - Hooked up Sentry Error Monitoring & Alerts Next.js SDK on the frontend, including edge/server/client configurations and a debug test page (`/sentry-test`) (`SCRUM-39` / `#50`).

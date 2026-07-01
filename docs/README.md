@@ -52,6 +52,8 @@ This directory is used to track every change, decision, branch, and feature impl
     * Summary of Sentry SDK frontend configuration, hydration mismatch fixes, and Lead Management page hookups.
 24. **[Simulated Services & Production Hookups Guide](file:///Users/amankumar/Aman/Sticho/docs/simulated-data-and-endpoints.md)**
     * Comprehensive guide cataloging backend mocks (SMS, Google OAuth, Sentry, Cloudinary fallback) and production transition steps.
+25. **[Tailor Details Page & Sync Log (Frontend)](file:///h:/Projects/Stichoh/docs/SCRUM-26-tailor-details-page-jeelan80.md)**
+    * Summary of customer-facing boutique details page creation, settings WhatsApp number addition, and profile sync fixes.
 
 
 

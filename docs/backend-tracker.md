@@ -151,6 +151,7 @@ Logs security enhancements, fixes, or vulnerability patches:
 
 ## 8. Changelog / Activity History
 Chronological record of backend modifications:
+* **2026-06-30:** Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}` endpoint. Previously, unverified tailors were blocked with a 404, causing their private settings page (`/dashboard/settings`) to crash. Added token-based authorization and Referer header checking to allow tailors to query their own profiles even if unverified.
 * **2026-06-30:** Implemented `GET /api/v1/leads` endpoint allowing tailors to retrieve a list of all customer leads submitted to them. Gated with JWT bearer authentication, mapped `LeadResponse` schema, and added Test 19 verifying endpoint retrieval.
 * **2026-06-30:** Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors`. Under the new email signup system (`SCRUM-20`), a record is inserted during `/register`. During onboarding, the frontend calls `createTailor` (POST). Refactored `create_tailor` to detect if the email is already registered with a signed-up account and enrich/update the profile instead of throwing "Email already registered".
 * **2026-06-30:** Implemented error monitoring and alerts via Sentry SDK (`SCRUM-39`). Configured environment variable `SENTRY_DSN` in configurations, initialized Sentry with FastApiIntegration and send_default_pii=True in `app/main.py` conditionally, created a `GET /sentry-debug` endpoint to test exception captures, and added Test 18 verifying Sentry setup.

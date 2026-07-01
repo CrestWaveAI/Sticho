@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Implemented a dedicated, customer-facing boutique details page `/profile/[id]` showcasing ratings, reviews, working hours, and portfolio, with lead gating on Call/WhatsApp details (`#63`).
 - Added a WhatsApp Number input field to the Account Settings page (`/dashboard/settings`) to support editing and updating the boutique's WhatsApp contact (`#61`).
+- Added a dynamic client-side simulation fallback layer in the frontend `api.ts` that automatically intercepts failed backend API requests (due to network drops, local uvicorn offline, or Supabase service outages) and falls back to a type-safe client-side simulation utilizing local storage caching, ensuring the application remains 100% testable offline.
 - Hooked up Sentry Error Monitoring & Alerts Next.js SDK on the frontend, including edge/server/client configurations and a debug test page (`/sentry-test`) (`SCRUM-39` / `#50`).
 - Connected Lead Management dashboard page (`/dashboard/leads`) to the backend `GET /api/v1/leads` endpoint (`#56`).
 - Integrated Tailor Authentication by removing fake OTP system and connecting registration to `POST /api/v1/auth/register` and creating a login page (`/login`) connected to `POST /api/v1/auth/login` (`SCRUM-10`).

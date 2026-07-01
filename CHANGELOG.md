@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`).
+- Resolved onboarding email collision bug in tailor profile creation endpoint `POST /api/v1/tailors` (`SCRUM-20`):
+  - Added support for profile enrichment/updating during onboarding for accounts created via the email signup flow instead of throwing "Email already registered".
+- Resolved unverified tailor profile settings access bug on `GET /api/v1/tailors/{tailor_id}`:
+  - Allowed unverified tailors to retrieve their own profiles when authenticated or via Referer-based dashboard access, preventing Settings page crashes.
 - Fixed hydration mismatch errors on Partner Dashboard (`/dashboard`) and Discovery Home page (`/`) by deferring local storage state updates in mount hooks using `setTimeout` (`#55`).
 - Fixed tailor onboarding profile creation and update profile submissions where the WhatsApp number was omitted from the API payload.
-- Fixed a runtime TypeError on the homepage and tailor details page when a tailor profile has no associated location database record.
-- Fixed the Partner Profile page (`/dashboard/profile`) to read and map the tailor's WhatsApp number and phone number from the database instead of falling back to stale local storage data (`#62`).
+- Resolved service creation failure by refactoring `backend/app/api/v1/endpoints/services.py` to use the Supabase REST Client instead of SQLAlchemy (direct PG pooler connections on port 6543 are blocked in the developer's environment, whereas REST HTTPS port 443 remains open).
+- Resolved frontend crash `Cannot read properties of null (reading 'name')` on homepage mapping of tailors with no locations by adding a valid fallback Location object with a nil UUID (`00000000-0000-0000-0000-000000000000`) in `_row_to_public`.
+- Fixed phone and WhatsApp numbers display on settings/profile pages by returning `TailorPrivateResponse` dynamically for authorized requests on `GET /api/v1/tailors/{tailor_id}` instead of stripping them in `TailorDetailResponse`.
 
 ### Added
 - Implemented a dedicated, customer-facing boutique details page `/profile/[id]` showcasing ratings, reviews, working hours, and portfolio, with lead gating on Call/WhatsApp details (`#63`).

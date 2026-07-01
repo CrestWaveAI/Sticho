@@ -274,6 +274,27 @@ class MockQueryBuilder:
                 r["customers"] = {"name": cust_row[0]} if cust_row else {"name": "Anonymous"}
             return MockExecuteResult(reviews)
 
+        elif self.table_name == "services":
+            sql = "SELECT * FROM services"
+            params = []
+            where_clauses = []
+            for field, op, val in self.filters:
+                where_clauses.append(f"{field} {op} ?")
+                params.append(normalize_val(val))
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            for r in rows:
+                if r.get("price_estimate") is not None:
+                    r["price_estimate"] = f"{float(r['price_estimate']):.2f}"
+                cursor.execute("SELECT * FROM categories WHERE id = ?", (r["category_id"],))
+                cat_cols = [col[0] for col in cursor.description]
+                cat_row = cursor.fetchone()
+                r["categories"] = dict(zip(cat_cols, cat_row)) if cat_row else None
+            return MockExecuteResult(rows)
+
         elif self.table_name == "leads":
             sql = "SELECT * FROM leads"
             params = []
@@ -432,6 +453,7 @@ async def run_tests():
         patch("app.api.v1.endpoints.auth.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.customer_auth.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.reviews.get_supabase", return_value=mock_client),
+        patch("app.api.v1.endpoints.services.get_supabase", return_value=mock_client),
         patch("app.api.v1.endpoints.tailors.cloudinary.uploader.upload", return_value={"secure_url": "https://res.cloudinary.com/demo/image/upload/sample.jpg"}),
     ]
     for p in patchers:
@@ -497,7 +519,18 @@ async def run_tests():
         print(f"Test 4b: Get tailor detail view for unverified tailor {test_unverified_tailor_id}")
         response = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}")
         assert response.status_code == 404, f"Expected 404 for unverified tailor, got {response.status_code}"
-        print("  - Unverified tailor is blocked (404 Not Found).")
+        
+        # Test 4b-2: Get tailor detail view for unverified tailor via referer (should succeed)
+        response_ref = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}", headers={"Referer": "http://localhost:3000/dashboard/settings"})
+        assert response_ref.status_code == 200, f"Expected 200 via referer, got {response_ref.status_code}"
+        
+        # Test 4b-3: Get tailor detail view for unverified tailor via token (should succeed)
+        from app.core.security import create_token
+        unverified_token = create_token({"tailor_id": str(test_unverified_tailor_id)})
+        response_tok = await client.get(f"/api/v1/tailors/{test_unverified_tailor_id}", headers={"Authorization": f"Bearer {unverified_token}"})
+        assert response_tok.status_code == 200, f"Expected 200 via token, got {response_tok.status_code}"
+        
+        print("  - Unverified tailor is blocked (404 Not Found) for public, but allowed for owner/dashboard.")
 
         # Test 4c: Get tailor detail view for non-existent tailor (should fail with 404)
         fake_id = uuid.uuid4()
